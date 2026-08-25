@@ -19,7 +19,7 @@ forecast origin O 에서 사용 가능한 값
 
 | 구분 | 계열 | 원기관 / 발간물 |
 |---|---|---|
-| 예측 대상 | WPU1012 | US BLS · PPI Detailed Report |
+| 예측 대상 | **WPU1012** (Iron and steel scrap, 상품코드 10-12, 비계절조정) | US BLS · PPI Detailed Report |
 | 강건성 대상 | WPU101211 | US BLS · PPI Detailed Report |
 | 설명변수 | WPU1017, WPU0542 | US BLS · PPI Detailed Report Table 9 |
 | 설명변수 | AWHMAN | US BLS · Employment Situation Table B-7 |
@@ -59,3 +59,41 @@ forecast origin O 에서 사용 가능한 값
 - 설명변수가 미국 공급·산업활동 축에 치우쳐 있고, 원자재 가격·전방 수요 축이 비어 있습니다.
 - M2(사건 압력)는 탐색적이며, 관측된 성능 저하는 사건의 정보가치가 아니라
   변수 지지 구간 문제에서 비롯됐습니다.
+
+
+---
+
+# Demo V2 추가 사항 (탐색적 확장)
+
+사전등록된 official 실험(N0/M0/M1)은 **그대로 보존**된다. 아래는 별도 확장이다.
+
+## 6. Common support — 동일 Train/Test
+
+각 예측시점에서 M0/M1/M2 가 쓸 수 있는 학습 행의 **교집합**을 먼저 계산하고, 세 단계
+모두 그 행만 쓴다. 어느 한 단계에서 결측인 행은 **세 단계 모두에서** 제외한다.
+
+그래서 "M0 는 100행, M2 는 74행" 같은 불공정 비교가 원천적으로 불가능하다.
+예측 시점·대상 월·평가 지표도 전부 동일하다.
+
+## 7. 두 가지 비교 방식
+
+| view | 목적 | 방법 |
+|---|---|---|
+| **A. 통제 비교** | 정보를 추가하면 성능이 어떻게 변하는가 | 알고리즘을 Ridge 로 고정 |
+| **B. Best-CV 벤치마크** | 각 정보 집합에서 가장 적합한 모델을 고르면 어떻게 되는가 | 학습 데이터 안에서만 model family 선택 |
+
+후보: Ridge · ElasticNet · RandomForest · HistGradientBoosting (전부 무료 CPU
+sklearn). 딥러닝을 쓰지 않는다.
+
+**모델 선택은 각 예측시점의 과거 학습데이터 내부 시간순 CV 로만 한다.**
+최종 OOS test 월은 모델 선택에 참여하지 않는다. M0/M1/M2 에 **동일한 후보군과
+동일한 CV 예산**을 적용한다. 초매개변수 grid 는 OOS 를 보기 전에 고정했다.
+
+## 8. 사건 압력 V2
+
+`docs/event_method.md` 참조. 요점:
+
+- POINT 사건 + **ONGOING 상태** 구분 → 긴 이력에서 support 유지
+- 카테고리별 월 상태를 **최댓값으로 상한** → 사건 개수가 신호를 지배하지 못함
+- `PEP, NEP ∈ [0,1]` → **표준화하지 않음** (z-score 폭발 불가능)
+- 대상월 m 의 상태는 m 시작 전에 알려진 것만 사용

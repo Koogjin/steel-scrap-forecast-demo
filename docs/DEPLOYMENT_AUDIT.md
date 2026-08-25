@@ -1,8 +1,10 @@
 # DEPLOYMENT AUDIT
 
-- 감사 시각(UTC): 2026-08-25T09:36:47+00:00
-- 검사 파일 수: 17
+- 감사 시각(UTC): 2026-08-25T12:00:15+00:00
+- 검사 파일 수: 21
 - 문제: **0건**
+
+> 배포된 앱이 공개로 보일 수 있다고 가정하고 **PUBLIC-SAFE 기준**으로 감사한다.
 
 ## 검사 항목
 
@@ -17,7 +19,7 @@
 
 이 저장소는 **연구 저장소의 사본이 아니라** 사전 계산된 안전 산출물만
 담은 별도 저장소다. 원본 BLS/Fed artifact, FRED/ALFRED 데이터,
-기사 본문, 자격증명은 포함되지 않는다.
+기사 본문, 자격증명, 회사 내부 정보는 포함되지 않는다.
 
 ## 포함된 파일
 
@@ -28,11 +30,15 @@
 - `assets/forecast_actual_vs_pred.png`
 - `assets/forecast_comparison.png`
 - `assets/model_stages.png`
-- `data/event_pressure.csv`
-- `data/event_registry.csv`
+- `data/demo_v2_metrics.csv`
+- `data/demo_v2_predictions.csv`
+- `data/demo_v2_selected_models.csv`
+- `data/event_registry_v2.csv`
 - `data/metrics.csv`
+- `data/pep_nep_v2.csv`
 - `data/predictions.csv`
 - `data/run_metadata.json`
+- `docs/event_method.md`
 - `docs/executive_summary.md`
 - `docs/methodology_summary.md`
 - `README.md`
