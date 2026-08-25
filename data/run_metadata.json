@@ -14,7 +14,7 @@
     "target_label": "WPU1012 (철스크랩 PPI)",
     "clean_pit_ready_x": 6,
     "n_origins": 50,
-    "n_tests": 686,
+    "n_tests": 704,
     "n_providers": 2,
     "fred_dependency": 0,
     "preregistered": true
