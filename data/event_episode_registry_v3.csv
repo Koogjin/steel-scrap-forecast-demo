@@ -1,0 +1,18 @@
+episode_id,episode_name,category,category_label,directness,scope,start_date,end_date,n_transitions,first_known_at,last_known_at,stages,economic_channel
+EP_JCPOA_RELIEF,JCPOA 이행일 이란 제재 해제,ENERGY_SUPPLY,에너지 공급,1,2,2016-01-25,,1,2016-01-25,2016-01-25,IMPLEMENTED,이란산 원유의 국제시장 복귀 -> 에너지 가격 하락 압력 -> 스크랩 수집·운송 원가와 전기로 조업원가 하락.
+EP_TX_GRID_EMERGENCY_2021,2021년 2월 텍사스 전력계통 비상,ENERGY_SUPPLY,에너지 공급,2,1,2021-02-14,2021-03-31,1,2021-02-14,2021-02-14,IMPLEMENTED,전기로 제강 밀집 지역의 전력 비상과 강제 부하 차단 -> 조업 중단과 지역 에너지 원가 급등.
+EP_RU_ENERGY_BAN,러시아산 원유·석유제품·LNG·석탄 수입 금지,ENERGY_SUPPLY,에너지 공급,2,3,2022-03-10,,1,2022-03-10,2022-03-10,IMPLEMENTED,에너지·운송 비용 상승 -> 스크랩 수집·가공·운송 원가와 전기로 조업원가 상승.
+EP_RU_UA_CONFLICT,러시아-우크라이나 분쟁 국가비상사태,GEOPOLITICAL_CONFLICT,지정학 분쟁,2,3,2022-02-23,,2,2022-02-23,2024-03-05,ESCALATED|CONFIRMED,주요 철강·원자재 수출국의 공급 차질과 교역 재편 -> 글로벌 공급 제약. 유럽 산업활동 위축은 하락 채널.
+EP_YEMEN_HOUTHI_STRIKES,예멘 후티 군사목표 타격,GEOPOLITICAL_CONFLICT,지정학 분쟁,1,2,2024-01-12,,1,2024-01-12,2024-01-12,ESCALATED,분쟁 확대에 따른 지역 리스크 프리미엄 상승 -> 조달·보험 비용 상승.
+EP_IRAN_STRIKE_2025,2025년 6월 미국의 이란 핵시설 타격,GEOPOLITICAL_CONFLICT,지정학 분쟁,1,3,2025-06-22,,1,2025-06-22,2025-06-22,ESCALATED,중동 에너지·해상 통로 리스크 프리미엄 상승 -> 에너지와 운송 원가 경로.
+EP_COVID19,COVID-19 공중보건·국가 비상사태,PANDEMIC_EMERGENCY,팬데믹/비상사태,2,3,2020-02-07,2023-05-11,3,2020-02-07,2023-05-11,ANNOUNCED|IMPLEMENTED|ENDED,공급망·물류 교란(상승 채널)과 산업 수요 급감(하락 채널)이 동시에 작동한 상충 환경.
+EP_RED_SEA_DISRUPTION,홍해 항로 교란과 다국적 해상보호 작전,SHIPPING_LOGISTICS,해상운송/물류,2,3,2023-12-18,,1,2023-12-18,2023-12-18,ANNOUNCED,홍해·수에즈 항로 위험 상승 -> 운임·보험료 상승과 우회에 따른 리드타임 증가.
+EP_BALTIMORE_PORT_2024,볼티모어 Key Bridge 붕괴와 항로 폐쇄,SHIPPING_LOGISTICS,해상운송/물류,1,1,2024-03-26,2024-06-30,1,2024-03-26,2024-03-26,IMPLEMENTED,미 동부 주요 항만의 항로 폐쇄 -> 지역 물류 우회와 단기 운송 비용 상승.
+EP_CORE_ADCVD,부식방지강판(CORE) 반덤핑·상계관세 사안,TRADE_REMEDY_ADCVD,무역구제(반덤핑·상계관세),3,2,2015-06-09,,6,2015-06-09,2016-11-14,SIGNALLED|PROPOSED|ANNOUNCED|IMPLEMENTED|ESCALATED,수입 부식방지강판 제한 -> 국내 밀 가동률과 국내 스크랩 수요 지지. 국내 강재가 상승은 전방 수요를 소폭 누른다.
+EP_CRS_ADCVD,냉연강판 반덤핑·상계관세 사안,TRADE_REMEDY_ADCVD,무역구제(반덤핑·상계관세),3,2,2015-08-03,,6,2015-08-03,2016-11-17,SIGNALLED|PROPOSED|IMPLEMENTED|ESCALATED,수입 냉연강판 제한 -> 국내 생산 대체 수요와 스크랩 소비 지지.
+EP_HRS_ADCVD,열연강판 반덤핑·상계관세 사안,TRADE_REMEDY_ADCVD,무역구제(반덤핑·상계관세),3,2,2015-09-09,,4,2015-09-09,2016-10-03,PROPOSED|IMPLEMENTED,열연강판은 전기로·고로 공통 주력 제품이다. 수입 제한은 국내 조업률과 스크랩 투입 수요에 직접 작용한다.
+EP_CTL_PLATE_ADCVD,탄소·합금 후판(cut-to-length plate) 반덤핑·상계관세 사안,TRADE_REMEDY_ADCVD,무역구제(반덤핑·상계관세),3,2,2016-09-13,,2,2016-09-13,2016-11-14,ANNOUNCED,후판 수입 제한 -> 국내 후판 생산 대체 수요 -> 스크랩 소비 지지.
+EP_S232_STEEL,Section 232 철강 국가안보 관세,TRADE_TARIFF_SANCTION,무역/관세/제재,3,3,2017-04-26,,6,2017-04-26,2025-06-09,SIGNALLED|IMPLEMENTED|ESCALATED,수입 강재 가격 상승 -> 국내 밀 마진·가동률·스크랩 수요 상승. 동시에 수입 축소와 전방 산업 원가 상승이라는 하락 채널이 병존한다.
+EP_S301_CHINA,Section 301 대중국 관세,TRADE_TARIFF_SANCTION,무역/관세/제재,2,3,2018-06-20,,5,2018-06-20,2024-09-18,ANNOUNCED|ESCALATED|IMPLEMENTED,글로벌 교역 재편과 중국 금속 제품 유입 경로 축소(상승 채널) / 세계 제조업 수요 둔화(하락 채널).
+EP_RUSSIA_SANCTIONS,대러시아 교역·투자·금속 제재,TRADE_TARIFF_SANCTION,무역/관세/제재,2,3,2022-03-15,,3,2022-03-15,2024-04-12,IMPLEMENTED|ESCALATED,주요 산업금속 공급·거래소 유통 제약(상승 채널) / 유럽 산업활동 위축(하락 채널).
+EP_IEEPA_TARIFFS_2025,2025년 IEEPA 기반 광범위 관세,TRADE_TARIFF_SANCTION,무역/관세/제재,2,3,2025-02-07,,5,2025-02-07,2025-04-15,ANNOUNCED|ESCALATED|DE_ESCALATED,전 교역 상대에 걸친 관세 -> 수입 대체와 국내 조달 비용 상승(상승 채널) / 교역량·전방 수요 위축(하락 채널).
