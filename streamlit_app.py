@@ -84,6 +84,10 @@ def load():
         ("v5_attr", "demo_v5_event_attribution.csv"),
         ("v5_cmp", "demo_v5_comparisons.csv"),
         ("channels", "event_channel_panel_v5.csv"),
+        ("v6_metrics", "demo_v6_metrics.csv"),
+        ("v6_support", "demo_v6_support.csv"),
+        ("v6_comparisons", "demo_v6_comparisons.csv"),
+        ("v6_selected", "demo_v6_selected_models.csv"),
         ("x_registry", "x_feature_registry.csv"),
         ("official_metrics", "metrics.csv"),
         ("v3_metrics", "demo_v3_metrics.csv"),
@@ -104,6 +108,7 @@ tgt = meta["target"]
 k = meta["kpi"]
 v3 = meta["demo_v3"]
 v5 = meta["demo_v5"]
+v6 = meta["demo_v6"]
 OPS = v5["operational"]
 CTRL = v5["controlled"]
 
@@ -418,6 +423,259 @@ with tabs[2]:
     q[3].metric("V4 대비 개선",
                 f"{100 * (1 - OPS['M2_star'] / mae('HISTORICAL_DEMO', 'M2R')):+.0f}%",
                 help="V4 의 Event 모델(M2-R) 대비 MAE 개선")
+
+    # =======================================================================
+    # §27/§28/§34 — Event 는 어디에서 가장 유용한가? (V6 예측역할 연구)
+    # =======================================================================
+    st.divider()
+    st.markdown("### Event는 어디에서 가장 유용한가?")
+    st.markdown(
+        "Event 정보가 **다음 달 지수 수준**을 맞히지 못한다는 것은 이미 확인했습니다. "
+        "그렇다면 **방향**, **큰 변동**, **전환점** 같은 다른 질문에는 도움이 될까요? "
+        "V6 는 이 세 가지를 각각 사전등록해 시험했습니다."
+    )
+
+    # ---- §34 네 개의 역할 카드 ----------------------------------------
+    cards = st.columns(4)
+    VCOLOR = {"개선": "#059669", "악화": "#DC2626", "결론 유보": "#6B7280"}
+    for col, card in zip(cards, v6["role_cards"]):
+        v = card["verdict"]
+        p = card.get("p_value")
+        pstr = (f"<br><span style='font-size:11.5px;color:#9CA3AF'>"
+                f"p = {p:.3f}</span>" if p is not None else "")
+        col.markdown(
+            f"<div style='background:#F8FAFC;border:1px solid #E2E8F0;"
+            f"border-left:5px solid {VCOLOR[v]};border-radius:8px;padding:14px;"
+            f"height:100%'>"
+            f"<span style='font-size:12.5px;color:#6B7280'>{card['label']}</span>"
+            f"<br><b style='font-size:20px;color:{VCOLOR[v]}'>{v}</b>"
+            f"<br><span style='font-size:12.5px;color:#374151'>"
+            f"{card['detail']}</span>"
+            f"<br><span style='font-size:11.5px;color:#9CA3AF'>"
+            f"{card['metric']}</span>{pstr}</div>",
+            unsafe_allow_html=True)
+    st.caption(
+        "각 카드는 **시장 정보 위에 Event 를 더했을 때의 변화**입니다. "
+        "네 가지를 하나의 점수로 합치지 않습니다 — 예측 역할마다 질문이 다릅니다.")
+
+    # ---- §28 역할 선택기 — 한 번에 하나만 -----------------------------
+    role_view = st.radio(
+        "어떤 예측 역할을 볼까요?",
+        ["Level (지수 수준)", "Direction (방향)", "Large Move (큰 변동)",
+         "Turning Point (전환점)"],
+        index=1, horizontal=True, key="v6_role")
+
+    v6m = D["v6_metrics"]
+    v6s = D["v6_support"]
+
+    def _val(role, h, cell, metric):
+        s = v6m[(v6m["role"] == role) & (v6m["horizon"] == h)
+                & (v6m["cell"] == cell)]
+        if s.empty or pd.isna(s[metric].iloc[0]):
+            return None
+        return float(s[metric].iloc[0])
+
+    # ================= LEVEL (§29) =====================================
+    if role_view.startswith("Level"):
+        st.markdown("#### 지수 수준 예측 — V5 에서 동결된 결과")
+        order = ["M0", "M1_star", "M2_star"]
+        vals = [OPS[m] for m in order]
+        fig = go.Figure()
+        for m, v in zip(order, vals):
+            fig.add_bar(x=[LABEL[m]], y=[v], showlegend=False,
+                        marker_color=COLORS[m], text=[f"{v:.2f}"],
+                        textposition="outside", textfont=dict(size=13))
+        show(finish(
+            fig, question="Q. Event 정보가 다음 달 지수 수준을 더 잘 맞히는가?",
+            title="Event 정보는 지수 수준 예측을 개선하지 못했다  "
+                  "<span style='font-size:13px;color:#6B7280'>MAE ↓ 낮을수록 정확</span>",
+            ylab="평균 예측오차 MAE (지수 Point)", xlab="",
+            footnote=FOOT_TARGET, height=420, legend=False))
+        takeaway(
+            f"시장 정보를 더한 M1\\* ({OPS['M1_star']:.2f})가 가장 정확했고, "
+            f"공식 Event 정보를 더한 M2\\* 는 {OPS['M2_star']:.2f} 로 "
+            "<b>더 나빠졌습니다.</b> 이 결과는 V5 에서 동결되어 바뀌지 않습니다.")
+
+    # ================= DIRECTION (§30) =================================
+    elif role_view.startswith("Direction"):
+        st.markdown("#### 방향 예측 — **1개월이 1차 가설입니다**")
+        st.caption(
+            "사전등록된 우선순위: **PRIMARY = 1개월** · 확인용 = 2개월 · 3개월. "
+            "나중에 결과가 좋은 기간을 골라 primary 라고 부르지 않습니다.")
+
+        fig = go.Figure()
+        hs = [1, 2, 3]
+        fig.add_bar(x=[f"{h}개월" for h in hs],
+                    y=[_val("direction", h, "D1", "balanced_accuracy") for h in hs],
+                    name="시장 정보만 (M1)", marker_color=COLORS["M1_star"],
+                    text=[f"{_val('direction', h, 'D1', 'balanced_accuracy'):.3f}"
+                          for h in hs], textposition="outside")
+        fig.add_bar(x=[f"{h}개월" for h in hs],
+                    y=[_val("direction", h, "D2", "balanced_accuracy") for h in hs],
+                    name="시장 + Event 정보 (M2)", marker_color=COLORS["M2_star"],
+                    text=[f"{_val('direction', h, 'D2', 'balanced_accuracy'):.3f}"
+                          for h in hs], textposition="outside")
+        fig.add_hline(y=0.5, line=dict(color="#9CA3AF", width=1.4, dash="dash"))
+        fig.add_annotation(xref="paper", x=0.99, y=0.5, xanchor="right",
+                           text="동전 던지기 0.50", showarrow=False, yshift=11,
+                           font=dict(size=11, color="#6B7280"))
+        fig.add_annotation(x="1개월", y=0.02, yref="y",
+                           text="◀ PRIMARY", showarrow=False,
+                           font=dict(size=12, color="#111827"))
+        fig.update_layout(barmode="group")
+        show(finish(
+            fig, question="Q. Event 정보가 향후 가격 방향 예측을 개선하는가?",
+            title="Event 정보가 향후 가격 방향 예측을 개선하는가?  "
+                  "<span style='font-size:13px;color:#6B7280'>"
+                  "Balanced Accuracy ↑ 높을수록 정확 · 0.50 = 동전 던지기</span>",
+            ylab="방향 정확도 (Balanced Accuracy)", xlab="예측 기간",
+            footnote=FOOT_TARGET + "  ·  PRIMARY = 1개월 (사전등록된 우선순위)",
+            height=460))
+        pc = v6["primary_comparison"]
+        takeaway(
+            f"1차 가설인 <b>1개월 방향</b>에서 Event 를 더하면 정확도가 "
+            f"<b>{pc['diff']:+.3f}</b> 변합니다 "
+            f"(95% 구간 [{pc['ci_low']:.3f}, {pc['ci_high']:.3f}], "
+            f"p = {pc['p_value']:.3f}). <b>개선의 증거가 없습니다.</b>")
+        reading_guide(
+            "막대가 높을수록 방향을 잘 맞힌 것입니다. 점선(0.50)은 동전 던지기 "
+            "수준입니다.",
+            "1개월에서 시장 정보만 쓴 모델이 가장 높고, Event 를 더하면 오히려 "
+            "낮아집니다.",
+            "예측 시점이 50개뿐이라 이 차이는 **통계적으로 유의하지 않습니다.** "
+            "3개월 결과가 달라 보여도 **확인용 기간**이며 1차 가설을 대체하지 않습니다.")
+
+        with st.expander("2×2 상세 — 시장·Event 를 각각 켜고 끄면"):
+            grid = [[_val("direction", 1, "D0", "balanced_accuracy"),
+                     _val("direction", 1, "DE", "balanced_accuracy")],
+                    [_val("direction", 1, "D1", "balanced_accuracy"),
+                     _val("direction", 1, "D2", "balanced_accuracy")]]
+            names = [["M0", "ME"], ["M1", "M2"]]
+            fig = go.Figure(go.Heatmap(
+                z=grid, x=["Event 없음", "Event 있음"],
+                y=["시장 없음", "시장 있음"], colorscale="RdYlGn",
+                colorbar=dict(title="정확도"),
+                hovertemplate="%{y} / %{x}<br>%{z:.3f}<extra></extra>"))
+            for i in range(2):
+                for j in range(2):
+                    fig.add_annotation(
+                        x=["Event 없음", "Event 있음"][j],
+                        y=["시장 없음", "시장 있음"][i],
+                        text=f"<b>{names[i][j]}</b><br>{grid[i][j]:.3f}",
+                        showarrow=False, font=dict(size=14, color="#111827"))
+            show(finish(
+                fig, question="Q. 시장과 Event 가 각각 방향 예측에 기여했는가?",
+                title="1개월 방향 — 2×2 정보 실험  "
+                      "<span style='font-size:13px;color:#6B7280'>"
+                      "Balanced Accuracy ↑ 높을수록 정확</span>",
+                ylab="", xlab="", footnote=FOOT_TARGET, height=360,
+                legend=False))
+            st.caption(
+                "시장 정보를 넣으면 위→아래로 정확도가 올라가고, Event 정보를 "
+                "넣으면 왼→오른쪽으로 내려갑니다.")
+
+    # ================= LARGE MOVE (§31) ================================
+    elif role_view.startswith("Large"):
+        st.markdown("#### 큰 가격변동 감지")
+        st.caption(
+            "‘큰 변동’은 각 시점의 **과거 데이터만으로** 정한 기준(상위 25%)을 "
+            "넘는 움직임입니다. 정답을 보고 기준을 정하지 않았습니다.")
+        hs = [1, 2, 3]
+        fig = go.Figure()
+        fig.add_bar(x=[f"{h}개월" for h in hs],
+                    y=[_val("large_move", h, "D1", "pr_auc") for h in hs],
+                    name="시장 정보만 (M1)", marker_color=COLORS["M1_star"],
+                    text=[f"{_val('large_move', h, 'D1', 'pr_auc'):.3f}"
+                          for h in hs], textposition="outside")
+        fig.add_bar(x=[f"{h}개월" for h in hs],
+                    y=[_val("large_move", h, "D2", "pr_auc") for h in hs],
+                    name="시장 + Event 정보 (M2)", marker_color=COLORS["M2_star"],
+                    text=[f"{_val('large_move', h, 'D2', 'pr_auc'):.3f}"
+                          for h in hs], textposition="outside")
+        fig.update_layout(barmode="group")
+        show(finish(
+            fig, question="Q. Event 정보가 큰 가격변동을 미리 감지하는가?",
+            title="Event 정보가 큰 가격변동을 미리 감지하는가?  "
+                  "<span style='font-size:13px;color:#6B7280'>"
+                  "PR-AUC ↑ 높을수록 잘 감지</span>",
+            ylab="큰 변동 감지력 (PR-AUC)", xlab="예측 기간",
+            footnote=FOOT_TARGET + "  ·  PRIMARY = 1개월", height=440))
+        c = next((x for x in v6["role_cards"] if x["role"] == "large_move"), None)
+        takeaway(
+            f"1개월 기준으로 Event 를 더하면 감지력이 "
+            f"<b>{c['diff']:+.3f}</b> 변합니다 (p = {c['p_value']:.3f}). "
+            "<b>개선되지 않았습니다.</b>")
+
+    # ================= TURNING POINT (§32) =============================
+    else:
+        st.markdown("#### 상승↔하락 전환 감지")
+        sup = v6s[(v6s["role"] == "turning_point") & (v6s["horizon"] == 1)]
+        verdict = sup["verdict"].iloc[0] if not sup.empty else "UNDERPOWERED"
+        if verdict != "OK":
+            st.warning("**표본 부족 — 결론 유보.** 전환점 사례가 통계적으로 "
+                       "판단하기에 충분하지 않았습니다.")
+        else:
+            n_pos = int(sup["n_positive"].iloc[0])
+            n_neg = int(sup["n_negative"].iloc[0])
+            cells = ["D0", "D1", "DE", "D2"]
+            lbl = {"D0": "과거 PPI 기반 (M0)", "D1": "시장 정보 (M1)",
+                   "DE": "Event 정보 (ME)", "D2": "시장 + Event (M2)"}
+            vals = [_val("turning_point", 1, c, "balanced_accuracy")
+                    for c in cells]
+            fig = go.Figure()
+            for c, v in zip(cells, vals):
+                fig.add_bar(x=[lbl[c]], y=[v], showlegend=False,
+                            marker_color="#9CA3AF" if v < 0.5 else "#059669",
+                            text=[f"{v:.3f}"], textposition="outside")
+            fig.add_hline(y=0.5, line=dict(color="#DC2626", width=1.6,
+                                           dash="dash"))
+            fig.add_annotation(xref="paper", x=0.99, y=0.5, xanchor="right",
+                               text="동전 던지기 0.50", showarrow=False,
+                               yshift=11, font=dict(size=11, color="#DC2626"))
+            show(finish(
+                fig, question="Q. Event 정보가 상승↔하락 전환을 감지하는가?",
+                title="Event 정보가 상승↔하락 전환을 감지하는가?  "
+                      "<span style='font-size:13px;color:#6B7280'>"
+                      "Balanced Accuracy ↑ 높을수록 정확</span>",
+                ylab="전환 감지 정확도 (Balanced Accuracy)", xlab="",
+                footnote=f"전환 사례 {n_pos}건 / 비전환 {n_neg}건 — 표본은 "
+                         f"충분했습니다.  ·  {FOOT_TARGET}",
+                height=440, legend=False))
+            takeaway(
+                f"<b>모든 모델이 동전 던지기(0.50)보다 낮습니다.</b> 전환 사례가 "
+                f"{n_pos}건으로 표본은 충분했으므로, 이것은 표본 부족이 아니라 "
+                "<b>이 데이터에서 전환점 자체가 예측되지 않는다</b>는 뜻입니다. "
+                "Event 를 더하면 더 낮아집니다.")
+
+    # ---- §33 Event 표현 설명 -------------------------------------------
+    st.divider()
+    with st.expander("Event 정보를 모델에 넣는 다섯 가지 방식"):
+        st.markdown(
+            "- **STATE (상태)** — 현재 Event 환경. 지금 어떤 상·하방 압력이 "
+            "걸려 있는가.\n"
+            "- **SHOCK (충격)** — 이번 달 Event 압력의 변화. 무엇이 **새로** "
+            "바뀌었는가.\n"
+            "- **TRANSITION (전이)** — 새로운 발표 / 시행 / 격화 같은 **상태 변화** "
+            "그 자체.\n"
+            "- **FRESHNESS (신선도)** — 최근 Event 가 얼마나 **새로운 정보**인지. "
+            "몇 년째 유지 중인 조치는 신선도가 낮습니다.\n"
+            "- **NOVEL EVENT (새로운 정보)** — 기존 가격·시장정보만으로는 예상되지 "
+            "않던 Event 성분. 이미 아는 것과 겹치는 부분을 뺀 나머지입니다.")
+        tf = v6["freshness_distribution"]
+        a, b, c = st.columns(3)
+        a.metric("Transition 이 발생한 달",
+                 f"{v6['transition_impulse_active_pct']:.0f}%")
+        b.metric("Freshness 중앙값", f"{tf['median']:.2f}")
+        c.metric("Event 표현 선택",
+                 " · ".join(f"{k} {v}" for k, v in
+                            v6["ev_family_selection_counts"].items()))
+        st.caption(
+            "V6 가 새로 만든 **TRANSITION · FRESHNESS** 는 의도대로 동작했지만, "
+            "학습 데이터는 이들을 넣지 않는 표현(EV-F0)을 더 자주 선택했습니다.")
+
+    with st.expander("Event 는 학습에서만 유용해 보였는가?"):
+        st.markdown(meta["v6_generalization_md"])
+
 
     # ---- 1. PEP / NEP --------------------------------------------------
     st.divider()
@@ -815,6 +1073,7 @@ with tabs[4]:
         st.markdown("#### 동봉 문서")
         for label, path in (("경영진 요약", "docs/executive_summary.md"),
                             ("방법론 요약", "docs/methodology_summary.md"),
+                            ("V6 결과와 해석", "docs/findings_v6.md"),
                             ("V5 결과와 해석", "docs/findings_v5.md"),
                             ("V4 결과와 해석", "docs/findings_v4.md"),
                             ("V3 결과와 해석", "docs/findings_v3.md"),

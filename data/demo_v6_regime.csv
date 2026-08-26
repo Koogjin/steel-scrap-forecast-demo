@@ -1,0 +1,3 @@
+regime,n,verdict,M1_balanced_accuracy,M2_balanced_accuracy,delta
+market_agrees,45,OK,0.546296,0.509259,-0.037037
+market_disagrees,5,UNDERPOWERED,,,

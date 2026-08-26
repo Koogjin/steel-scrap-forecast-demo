@@ -1,6 +1,6 @@
 {
   "exported_at": "2026-08-26",
-  "git_commit": "501329261af091d7dd6b5a486df8485ee3be9736",
+  "git_commit": "d01994437f24d629b6eda5992bc4a8ea625d431a",
   "preregistration_sha256": "86d9e7dcd0591757360813c1e4e1ef4d4fb7c752fc2078346f21ceeb5da04852",
   "freeze_manifest_sha256": "ca5bb8212b44fc7b7da71ff051c1239f95d541c141379280e97374973f926fc2",
   "target": {
@@ -17,7 +17,7 @@
     "n_derived_features": 12,
     "n_origins": 50,
     "n_event_records": 49,
-    "n_tests": 888,
+    "n_tests": 953,
     "fred_dependency": 0
   },
   "common_support": {
@@ -507,6 +507,315 @@
       }
     }
   },
+  "demo_v6": {
+    "freeze_version": "V6A-2026-08-27",
+    "frozen_before_run": true,
+    "event_registry_changed": false,
+    "total_candidate_count": 63,
+    "candidates_per_cell": {
+      "D0": 3,
+      "D1": 6,
+      "DE": 18,
+      "D2": 36
+    },
+    "role_summary": {
+      "direction": {
+        "1": {
+          "verdict": "OK",
+          "n": 50,
+          "n_positive": 22,
+          "n_negative": 28,
+          "M0": 0.487013,
+          "M1": 0.547078,
+          "ME": 0.483766,
+          "M2": 0.511364,
+          "M2*": 0.534091
+        },
+        "2": {
+          "verdict": "OK",
+          "n": 49,
+          "n_positive": 18,
+          "n_negative": 31,
+          "M0": 0.511649,
+          "M1": 0.553763,
+          "ME": 0.491039,
+          "M2": 0.549283,
+          "M2*": 0.549283
+        },
+        "3": {
+          "verdict": "OK",
+          "n": 48,
+          "n_positive": 21,
+          "n_negative": 27,
+          "M0": 0.444444,
+          "M1": 0.457672,
+          "ME": 0.587302,
+          "M2": 0.457672,
+          "M2*": 0.47619
+        }
+      },
+      "large_move": {
+        "1": {
+          "verdict": "OK",
+          "n": 50,
+          "n_positive": 14,
+          "n_negative": 36,
+          "M0": 0.355809,
+          "M1": 0.34194,
+          "ME": 0.308848,
+          "M2": 0.307333,
+          "M2*": 0.332422
+        },
+        "2": {
+          "verdict": "OK",
+          "n": 49,
+          "n_positive": 15,
+          "n_negative": 34,
+          "M0": 0.275121,
+          "M1": 0.362447,
+          "ME": 0.257183,
+          "M2": 0.346173,
+          "M2*": 0.365176
+        },
+        "3": {
+          "verdict": "OK",
+          "n": 48,
+          "n_positive": 13,
+          "n_negative": 35,
+          "M0": 0.365531,
+          "M1": 0.478472,
+          "ME": 0.413112,
+          "M2": 0.444624,
+          "M2*": 0.398718
+        }
+      },
+      "turning_point": {
+        "1": {
+          "verdict": "OK",
+          "n": 50,
+          "n_positive": 27,
+          "n_negative": 23,
+          "M0": 0.4219,
+          "M1": 0.375201,
+          "ME": 0.39372,
+          "M2": 0.316425,
+          "M2*": 0.297907
+        }
+      }
+    },
+    "ev_family_selection_counts": {
+      "EV-F1": 212,
+      "EV-F0": 476
+    },
+    "lambda_E_primary_direction": {
+      "0.0": 10,
+      "0.5": 4,
+      "1.0": 36
+    },
+    "transition_impulse_active_pct": 28.0,
+    "freshness_distribution": {
+      "min": 0.0435,
+      "median": 0.25,
+      "max": 1.0,
+      "pct_equal_1": 28.0
+    },
+    "regime": [
+      {
+        "regime": "market_agrees",
+        "n": 45,
+        "verdict": "OK",
+        "M1_balanced_accuracy": 0.546296,
+        "M2_balanced_accuracy": 0.509259,
+        "delta": -0.037037
+      },
+      {
+        "regime": "market_disagrees",
+        "n": 5,
+        "verdict": "UNDERPOWERED"
+      }
+    ],
+    "horizon_hierarchy": {
+      "primary": 1,
+      "secondary": [
+        2,
+        3
+      ]
+    },
+    "roles": {
+      "direction": {
+        "horizons": [
+          1,
+          2,
+          3
+        ],
+        "primary_horizon": 1,
+        "primary_metric": "balanced_accuracy"
+      },
+      "large_move": {
+        "horizons": [
+          1,
+          2,
+          3
+        ],
+        "primary_horizon": 1,
+        "primary_metric": "pr_auc"
+      },
+      "turning_point": {
+        "horizons": [
+          1
+        ],
+        "primary_horizon": 1,
+        "primary_metric": "balanced_accuracy"
+      }
+    },
+    "ev_families": {
+      "EV-F0": [
+        "PEP",
+        "NEP",
+        "dPEP",
+        "dNEP",
+        "shock_A_TRADE_POLICY",
+        "shock_B_GEO_SUPPLY",
+        "shock_C_DEMAND_MACRO"
+      ],
+      "EV-F1": [
+        "PEP",
+        "NEP",
+        "dPEP",
+        "dNEP",
+        "shock_A_TRADE_POLICY",
+        "shock_B_GEO_SUPPLY",
+        "shock_C_DEMAND_MACRO",
+        "impulse_up",
+        "impulse_down",
+        "freshness"
+      ]
+    },
+    "support": [
+      {
+        "role": "direction",
+        "horizon": "1",
+        "n_labelled": "50",
+        "n_positive": "22",
+        "n_negative": "28",
+        "verdict": "OK"
+      },
+      {
+        "role": "direction",
+        "horizon": "2",
+        "n_labelled": "49",
+        "n_positive": "18",
+        "n_negative": "31",
+        "verdict": "OK"
+      },
+      {
+        "role": "direction",
+        "horizon": "3",
+        "n_labelled": "48",
+        "n_positive": "21",
+        "n_negative": "27",
+        "verdict": "OK"
+      },
+      {
+        "role": "large_move",
+        "horizon": "1",
+        "n_labelled": "50",
+        "n_positive": "14",
+        "n_negative": "36",
+        "verdict": "OK"
+      },
+      {
+        "role": "large_move",
+        "horizon": "2",
+        "n_labelled": "49",
+        "n_positive": "15",
+        "n_negative": "34",
+        "verdict": "OK"
+      },
+      {
+        "role": "large_move",
+        "horizon": "3",
+        "n_labelled": "48",
+        "n_positive": "13",
+        "n_negative": "35",
+        "verdict": "OK"
+      },
+      {
+        "role": "turning_point",
+        "horizon": "1",
+        "n_labelled": "50",
+        "n_positive": "27",
+        "n_negative": "23",
+        "verdict": "OK"
+      }
+    ],
+    "role_cards": [
+      {
+        "role": "level",
+        "label": "Level (1개월 지수)",
+        "metric": "MAE",
+        "verdict": "개선",
+        "base_value": 48.83,
+        "test_value": 51.04,
+        "base_name": "M1*",
+        "test_name": "M2*",
+        "detail": "M1* 48.83 → M2* 51.04 (MAE ↓ 낮을수록 정확)",
+        "p_value": null,
+        "note": "V5 에서 동결된 결과입니다."
+      },
+      {
+        "role": "direction",
+        "label": "Direction (1개월 방향)",
+        "metric": "Balanced Accuracy",
+        "verdict": "악화",
+        "base_value": 0.547078,
+        "test_value": 0.511364,
+        "base_name": "M1",
+        "test_name": "M2",
+        "diff": -0.035714,
+        "p_value": 0.42975,
+        "detail": "M1 0.547 → M2 0.511",
+        "note": ""
+      },
+      {
+        "role": "large_move",
+        "label": "Large Move (1개월)",
+        "metric": "PR-AUC",
+        "verdict": "악화",
+        "base_value": 0.34194,
+        "test_value": 0.307333,
+        "base_name": "M1",
+        "test_name": "M2",
+        "diff": -0.034607,
+        "p_value": 0.371737,
+        "detail": "M1 0.342 → M2 0.307",
+        "note": ""
+      },
+      {
+        "role": "turning_point",
+        "label": "Turning Point (1개월)",
+        "metric": "Balanced Accuracy",
+        "verdict": "악화",
+        "base_value": 0.375201,
+        "test_value": 0.316425,
+        "base_name": "M1",
+        "test_name": "M2",
+        "diff": -0.058776,
+        "p_value": 0.34275,
+        "detail": "M1 0.375 → M2 0.316",
+        "note": "모든 모델이 우연(0.5)보다 낮습니다 — 이 표본에서는 전환점 자체가 예측되지 않습니다."
+      }
+    ],
+    "primary_comparison": {
+      "base": "M1",
+      "test": "M2",
+      "metric": "balanced_accuracy",
+      "diff": -0.035714,
+      "p_value": 0.42975,
+      "ci_low": -0.165057,
+      "ci_high": 0.022754
+    }
+  },
   "m1_diagnosis": {
     "rows_per_feature_min": 3.273,
     "n_features_M1": 22,
@@ -545,6 +854,14 @@
       "next_change": "층을 쌓아 Event 보정을 산술적으로 분리하고, 규제 강도를 고정한 대조군을 함께 돌리도록 설계했습니다."
     },
     {
+      "label": "M2 V4",
+      "mae": 67.400211,
+      "headline": "효과 분리 성공 · 정확도는 실패",
+      "problem": "단계 보정 구조에서 Event 보정은 커졌지만 방향 적중률이 54% 에 그쳤습니다.",
+      "diagnosis": "보정 층이 학습하는 잔차는 **약한 기본 모델**의 잔차라 실제 최종 모델의 잔차보다 체계적으로 큽니다. 큰 보정 × 무작위 방향 = 분산 주입입니다.",
+      "next_change": "이번 단계에서 추가 조정을 하지 않았습니다. 남은 근본 제약은 표본 크기입니다."
+    },
+    {
       "label": "M2 V5",
       "mae": 51.039376,
       "headline": "Event 노이즈는 막았으나 예측가치는 없음",
@@ -553,12 +870,12 @@
       "next_change": "이번 단계에서 추가 조정을 하지 않았습니다. 남은 근본 제약은 표본 크기이며, 모델 선택 자체가 과적합의 주된 원천임을 합성 실험으로 확인했습니다."
     },
     {
-      "label": "M2 V4",
-      "mae": 67.400211,
-      "headline": "효과 분리 성공 · 정확도는 실패",
-      "problem": "단계 보정 구조에서 Event 보정은 커졌지만 방향 적중률이 54% 에 그쳤습니다.",
-      "diagnosis": "보정 층이 학습하는 잔차는 **약한 기본 모델**의 잔차라 실제 최종 모델의 잔차보다 체계적으로 큽니다. 큰 보정 × 무작위 방향 = 분산 주입입니다.",
-      "next_change": "이번 단계에서 추가 조정을 하지 않았습니다. 남은 근본 제약은 표본 크기입니다."
+      "label": "M2 V6",
+      "mae": 51.039376,
+      "headline": "예측 역할을 바꿔서 물어봤지만 답은 같았다",
+      "problem": "Event 가 지수 수준을 못 맞힌다면 방향·큰 변동·전환점에는 도움이 될까? 세 가지를 각각 사전등록해 시험했습니다.",
+      "diagnosis": "세 역할 모두 개선이 없었습니다. 그러나 이번에 처음으로 이유가 보입니다 — Event 를 포함한 모델만 **학습에서 더 좋아 보이고 실제 예측에서 무너지는** 격차를 보였습니다.",
+      "next_change": "이번 단계에서 추가 조정을 하지 않았습니다. 남은 제약은 예측 시점 50개라는 규모 자체입니다."
     }
   ],
   "agent_team": {
@@ -595,7 +912,8 @@
               "nested time-series CV",
               "walk-forward 백테스트",
               "지표 계산",
-              "staged residual 구조 구현"
+              "블록 규제 구현",
+              "V6: 방향·큰변동 위험 모델링"
             ],
             "outputs": [
               "feature 파이프라인",
@@ -613,7 +931,8 @@
               "episode / transition 코딩",
               "채점 rubric 설계",
               "PEP / NEP 생성",
-              "정보월 PIT 규칙 적용"
+              "정보월 PIT 규칙 적용",
+              "V6: Event 전이·신선도 가설 설계"
             ],
             "outputs": [
               "공식 사건 레지스트리",
@@ -636,7 +955,8 @@
               "방법론 검토",
               "테스트 검증",
               "결과 과장 여부 점검",
-              "동결 위반 탐지"
+              "동결 위반 탐지",
+              "V6: horizon·라벨 누수 검증"
             ],
             "outputs": [
               "자동 테스트 스위트",
@@ -722,6 +1042,7 @@
   "v5_market_md": "**V4 진단이 지목한 문제를 블록 규제가 실제로 고쳤습니다.**\n\n이전에는 시장 변수를 넣으면 모델 전체의 규제가 강해지면서 유용한 가격이력 신호까지 함께 눌렸습니다. V5 는 가격이력·시장·Event 에 **각각 다른 규제 강도**를 적용합니다.\n\n- 실제로 서로 다른 값이 선택됐습니다 — 시장 규제는 10~100 에 머문 반면 가격이력 규제는 1~10,000 까지 분포했습니다.\n- 상관 높은 12개 시장 변수를 소수 요인으로 압축하는 **PLS 가 28/50 예측시점에서 선택**됐습니다.\n- 학습 근거가 부족한 **40%** 의 시점에서는 모델이 시장 정보를 쓰지 않고 가격이력 모델로 되돌아갔습니다.",
   "v5_event_md": "**Event 정보는 이번에도 예측 정확도를 개선하지 못했습니다.** 네 개의 정보 조합(2×2) 어디에서도, 두 트랙 모두에서 개선이 없었습니다.\n\n그러나 V4 와 결정적으로 다른 점이 있습니다. V4 에서는 Event 가 **모든** 예측시점에서 강제로 사용되어 중앙값 15 지수 Point 씩 예측을 흔들었습니다. V5 에서는 모델이 학습 근거를 보고 **90% 의 시점에서 Event 를 쓰지 않기로 스스로 선택**했고, 중앙값 보정폭은 **0.0** 입니다.\n\n그 결과 V4 의 Event 모델(MAE 67.40) 대비 V5 는 **MAE 51.04** 로 크게 나아졌습니다. 다만 이것은 **Event 를 유용하게 만든 것이 아니라 해롭지 않게 만든 것**입니다.",
   "v5_novel_md": "**Event 정보 중 '이미 아는 것으로 설명되지 않는 부분'만 남긴 표현**을 후보로 넣었습니다. 최근 가격과 시장 지표로 Event 압력을 예측한 뒤, 그 예측분을 뺀 나머지입니다.\n\n학습 데이터 안에서는 이 **Novel 표현이 원본을 100% 이겼습니다** — Event 가 선택된 모든 경우에 Novel 이 뽑혔고 원본은 한 번도 선택되지 않았습니다. **그럼에도 예측 정확도는 개선되지 않았습니다.**",
+  "v6_generalization_md": "**그렇습니다 — 그리고 이번에 처음으로 그것을 수치로 볼 수 있습니다.**\n\n각 모델이 학습 내부 검증에서 낸 정확도와 실제 예측에서 낸 정확도의 차이(1개월 방향)입니다. 양수면 **학습에서 더 좋아 보였다**는 뜻입니다.\n\n| 모델 | 학습에서 더 좋아 보인 정도 |\n|---|---|\n| 과거 PPI 기반 (M0) | +0.020 |\n| 시장 정보 (M1) | **-0.003** |\n| Event 정보 (ME) | **+0.096** |\n| 시장 + Event (M2) | **+0.068** |\n\n**시장 정보만 쓴 모델은 격차가 사실상 0** 입니다 — 학습에서 보인 만큼 실제로도 맞혔습니다. 반면 **Event 를 포함한 모델만 격차가 큽니다.**\n\n이것이 V1~V6 를 관통하는 답입니다: 공식 Event 정보는 **과거 데이터에 맞출 때는 유용해 보이지만 실제 예측에서는 그 유용성이 재현되지 않습니다.**",
   "v5_limitation_md": "**가장 큰 제약은 여전히 표본 크기이며, V5 는 그 제약의 구체적 형태를 처음 드러냈습니다.**\n\n예측시점마다 후보가 수백~수천 개인데 내부 검증에 쓸 수 있는 달은 36개뿐입니다. 난수 실험 결과, **예측 대상과 아무 관계가 없는 잡음조차** 내부 검증 오차를 중앙값 1.6%(시장) / 5.6%(Event) 개선했습니다.\n\n즉 이 규모에서는 **모델 선택 자체가 과적합의 주된 원천**입니다. 그래서 12% 문턱을 두었고, 그 문턱이 다시 진짜 시장 신호도 일부 막았습니다. **새 변수가 아니라 더 긴 과거 이력만이 이 딜레마를 풉니다.**",
   "result_reading_md": "**결과를 그대로 보고합니다.** 시장 정보를 더한 M1 도, 공식 사건 정보를 더한 M2 계열도, 단계 보정 구조의 M1-R·M2-R 도 **M0 를 개선하지 못했습니다.** 이 조건에서 가장 정확한 것은 여전히 과거 PPI 이력만 쓰는 M0 입니다. **\"유의하지 않음\"과 \"효과 없음\"은 다릅니다** — 예측 시점 50개로는 검정력이 제한적입니다.",
   "v4_architecture_md": "**V4 는 정보를 한꺼번에 넣지 않고 층으로 쌓습니다.**\n\n- **M0** — 과거 PPI 이력만으로 예측합니다.\n- **M1-R** — M0 가 설명하지 못한 부분을 기존 시장·산업 정보로 보정합니다.\n- **M2-R** — M1-R 이 설명하지 못한 부분을 공식 Event 정보로 보정합니다.\n\n이 구조에서는 **`M2-R − M1-R` 이 정확히 Event 보정폭**입니다. 이전(V3)처럼 변수를 추가하는 순간 규제 강도가 재선택되고 전체 계수가 다시 적합되어 효과가 섞이는 일이 **구조적으로 일어날 수 없습니다.**",
