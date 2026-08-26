@@ -1,0 +1,7 @@
+series_id,official_name,source,publication,official_code,unit,measures,possible_channel,derived_features,pit_decision
+WPU1017,PPI: Steel Mill Products,US BLS,"PPI Detailed Report, Table 9",commodity code 10-17,index,철강 압연제품의 생산자물가지수,스크랩을 원료로 쓰는 철강 제품의 생산자 가격. 전방 제품 가격과 원료 가격이 함께 움직일 가능성이 있습니다.,WPU1017_level · WPU1017_chg_3m,CLEAN_PIT_READY
+WPU0542,PPI: Electric Power,US BLS,"PPI Detailed Report, Table 9",commodity code 05-42,index,전력의 생산자물가지수,전기로(EAF) 제강의 주요 비용 항목. 전력 가격은 스크랩을 쓰는 조업의 채산성과 관련될 가능성이 있습니다.,WPU0542_level · WPU0542_chg_3m,CLEAN_PIT_READY
+AWHMAN,Avg Weekly Hours: Manufacturing,US BLS,"Employment Situation, Table B-7",CES3000000007,hours,제조업 생산직 주당 평균 근로시간,제조업 가동 강도. 공정에서 나오는 스크랩 발생량과 제조 수요 양쪽에 관련될 가능성이 있습니다.,AWHMAN_level · AWHMAN_chg_3m,CLEAN_PIT_READY
+INDPRO,Industrial Production: Total,Federal Reserve Board,"G.17, archived dated release",Table 1/4 Total IP,index,미국 전체 산업생산지수,미국 산업생산 전반의 활동 수준. 철강·스크랩 수요 환경과 관련될 가능성이 있습니다.,INDPRO_level · INDPRO_chg_3m,CLEAN_PIT_READY
+IPG331S,IP: Primary Metal,Federal Reserve Board,"G.17, archived dated release","Table 4, Primary metals | NAICS 331",index,1차 금속(NAICS 331) 산업생산지수,1차 금속 산업의 생산 활동. 스크랩을 직접 소비하는 산업의 생산량입니다.,IPG331S_level · IPG331S_chg_3m,CLEAN_PIT_READY
+CAPUTLG331S,Capacity Utilization: Primary Metal,Federal Reserve Board,"G.17, archived dated release","Table 7, Primary metals | NAICS 331",percent,1차 금속(NAICS 331) 설비 가동률,1차 금속 설비 가동률. 가동률이 높을수록 원료 수요가 강할 가능성이 있습니다.,CAPUTLG331S_level · CAPUTLG331S_chg_3m,CLEAN_PIT_READY
