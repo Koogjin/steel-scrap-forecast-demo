@@ -229,3 +229,101 @@ M2-R = M1-R + event correction     (V3 PEP/NEP · 정의 불변)
   83% 크기인데 부호 적중은 42% 로 동전 던지기보다 나쁘다.
 
 `docs/findings_v4.md` 참조. **가장 큰 남은 제약은 모델이 아니라 표본 크기다.**
+
+---
+
+## 14. Demo V5 — M2 중심 재설계 + 2×2 정보 실험
+
+방법론은 실행 **전에** 설정 파일과 문서로 고정해 커밋했고, 결과를 본 뒤 어떤 설정도
+바꾸지 않았다.
+
+### 14-1. 블록 규제 (M1 을 고친 것)
+
+전역 penalty 하나 대신 블록마다 다른 penalty 를 준다.
+
+```
+min  ||y - Zb||^2 + a_H||b_H||^2 + a_X||b_X||^2 + a_E||b_E||^2
+```
+
+표준화를 **적합 안에서 학습행 통계로만** 하므로 penalty 가 원 단위에 의존하지 않는다
+(scale-invariant, 테스트가 강제).
+
+실측: `a_X` 를 1 → 10,000 으로 올리면 Market 계수 norm 은 0.307 → 0.002 로 수축하는데
+History 계수 norm 은 9.643 → 9.655 로 **사실상 불변**이다. V4 의 실패 모드가 구조적으로
+제거된다.
+
+M1 후보 246개 = M0 fallback + block + PLS(1~4 성분) + convex combination(w 0~1).
+`gamma_X ∈ {0,.25,.5,.75,1}` 로 Market 신뢰도를 학습 안에서 조정한다.
+
+**V5 의 History-only 모델은 공식 M0 를 수치적으로 재현한다**(max |차이| 6.8e-13,
+50 origin 전부 같은 alpha) — 2×2 가 공식 결과에 고정된다.
+
+### 14-2. Event 표현 (M2 의 본체)
+
+- **State** `PEP`, `NEP` — 지금 어떤 압력 환경인가
+- **Shock** `ΔPEP`, `ΔNEP` — 이번 달에 무엇이 새로 바뀌었나
+- **거시 채널** — 동결된 V3 카테고리 7개를 빠짐없이·중복없이 3개로 매핑하고
+  채널별 순압력 변화를 만든다(target 미사용, 실행 전 동결)
+- **Event family 4개** — E0 state · E1 state+shock · E2 +lag1 · E3 +channel shock
+- **Novel Event** — Event 를 History(+Market)로 예측한 뒤 뺀 나머지.
+  **target 잔차 적합이 아니라 Event 직교화**이며 WPU1012 를 전혀 쓰지 않는다.
+  학습행은 expanding block cross-fitting, live 행은 학습행 전체로만 적합.
+
+### 14-3. Event 신뢰도와 NO_EVENT
+
+```
+M2* = Base + lambda_E * (EventEnhanced - Base)     lambda_E ∈ {0,.25,.5,.75,1}
+```
+
+`EventEnhanced - Base` 는 **같은 블록 penalty 아래의 no-event 쌍둥이**와의 차이로
+계산한다 — V3 가 실패한 지점(규제 재선택·전체 refit 혼입)을 구조적으로 막는다.
+`lambda_E = 0` 이 격자에 있으므로 **NO_EVENT 가 언제나 후보다.**
+
+### 14-4. parsimony margin 0.12 — 합성 null 보정
+
+origin 하나마다 후보가 수백~수천 개인데 inner 검증행은 3 fold × 12개월 = 36개뿐이다.
+**난수 40회 시뮬레이션**(WPU1012·Market X·Event 레지스트리 미사용) 결과 우연한 개선은
+
+    market  median 1.57% · p90 6.72% · max  8.38%
+    event   median 5.58% · p90 11.07% · max 11.93%
+
+이고 margin 0.12 에서 두 층 모두 fallback 유지율 100% 가 된다. 그래서 확장 정보는
+fallback 보다 inner-CV MAE 를 **12% 이상** 낮출 때에만 선택된다.
+
+**대가를 명시한다** — 이 문턱은 약한 진짜 신호도 함께 막을 수 있다. 그래서 controlled
+track 은 margin 없이 정보 증분을 그대로 보여준다.
+
+### 14-5. 2×2 정보 실험과 두 트랙
+
+| | Event 없음 | Event 있음 |
+|---|---|---|
+| Market 없음 | M0 | ME* |
+| Market 있음 | M1* | M2* |
+
+- **CONTROLLED** — 네 셀에 같은 블록 Ridge, Event 표현 `E1`/`RAW` 고정, 보정 없음
+- **OPERATIONAL** — 학습 전용 선택 + `gamma_X`·`lambda_E` 보정 (주 성능 결과)
+
+`ME*` 는 필수다 — 현재 M1 이 M0 보다 약했으므로 Event 는 M0 위에서 더 잘 작동할 수
+있고, ME* 만 개선되면 Market X 가 Event 증분정보를 가린다는 뜻이다.
+
+### 14-6. 결과 (있는 그대로)
+
+| MAE ↓ | Event 없음 | Event 있음 |
+|---|---|---|
+| **OPERATIONAL** Market 없음 | 49.19 | 51.86 |
+| **OPERATIONAL** Market 있음 | **48.83** | 51.04 |
+| **CONTROLLED** Market 없음 | 49.19 | 50.03 |
+| **CONTROLLED** Market 있음 | **47.14** | 52.16 |
+
+- **M1 재설계 성공** — controlled M1 47.14 는 M0 49.19 를 4.17% 개선(DM p=0.075).
+  이 프로젝트에서 시장 정보가 가격이력을 넘어선 것은 처음이다.
+  선택 분포: PLS 28/50 · M0-fallback 20/50.
+- **Event 는 여전히 개선하지 못한다** — 네 셀·두 트랙 모두. 가장 뚜렷한 것은
+  controlled M1 → M2 −10.7% (DM p=0.019).
+- **Event 노이즈는 크게 줄었다** — V4 M2-R 67.40 → V5 M2* 51.04 (+24.3%, DM p=0.010).
+  NO_EVENT fallback 90%, median 보정폭 0.00.
+- **Novel Event 는 학습 안에서 RAW 를 100% 이겼다**(M2 5/5, ME 19/19). OOS 개선은 없다.
+- **채널별 유용성은 판별 불가** — 두 채널이 50개월 내내 활성, 나머지 하나는 2개월.
+
+`docs/findings_v5.md` 참조. **가장 큰 남은 제약은 표본 크기이며, V5 는 그 제약이
+'모델 선택 과적합'이라는 구체적 형태로 나타남을 처음 정량화했다.**

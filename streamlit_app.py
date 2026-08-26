@@ -1,22 +1,27 @@
-"""미국 철·강 스크랩 생산자물가지수(PPI) 예측 Demo — presentation layer (V4).
+"""미국 철·강 스크랩 생산자물가지수(PPI) 예측 Demo — presentation layer (V5).
 
 이 앱은 **저장된 결과만 읽는다.** 연구 파이프라인을 다시 돌리지 않는다:
 원문 데이터를 내려받지 않고, PIT 패널을 재구성하지 않고, 사건을 수집하지 않고,
 모델을 학습하지 않고, 외부 API 를 호출하지 않는다.
 
-## 경영진 리포팅 규약 (§PART Q)
+## V5 의 설계 원칙 — Executive vs Research 분리 (§PART I)
 
-이 대시보드는 **개별 차트를 스크린샷으로 잘라 PowerPoint 에 붙여도** 뜻이 통해야
-한다. 그래서 모든 주요 그래프는
+이전 버전은 **과학적으로는 완전했지만 시각적으로 과부하**였다. 10개 모델이 기본
+화면에 동시에 떠 있었다.
 
-  - 제목이 **비즈니스 질문**을 말하고 (§33)
-  - 범례가 **모델 코드가 아니라 의미**를 먼저 말하고 (§31, §42)
-  - 축 이름이 한국어이며 단위를 담고 (§35)
-  - 방향 단서(↓ 낮을수록 정확 등)를 제목에 넣고 (§36)
-  - **각주가 그림 안에** 들어가며 (§40)
-  - 그림 밖에는 한 줄 핵심 해석이 따라붙는다 (§39)
+V5 는 둘을 분리한다.
 
-핵심 해석 문구는 **저장된 수치에서 계산**한다 — 손으로 쓴 성공 주장을 넣지 않는다.
+    기본 화면(Executive)   M0 / M1* / M2* **세 개만**. 30초 안에 핵심이 읽힌다.
+    Research Archive       V1~V5 전체 실험을 **하나도 지우지 않고** 접어서 보관.
+
+연구 결과는 전부 보존된다. 다만 **모든 실험이 기본 화면에서 같은 크기로 보일
+필요는 없다.**
+
+## 스크린샷 규약 (§PART K)
+
+주요 차트는 개별 스크린샷으로 잘라 PowerPoint 에 붙여도 뜻이 통해야 한다.
+제목이 비즈니스 질문을 말하고, 범례가 의미를 먼저 말하고, 축이 한국어이며,
+각주가 **그림 안에** 들어간다.
 """
 
 from __future__ import annotations
@@ -32,33 +37,38 @@ DATA = Path(__file__).parent / "data"
 ASSETS = Path(__file__).parent / "assets"
 
 # ---------------------------------------------------------------------------
-# §42 — 경영진용 모델 표기 표준. 의미를 먼저, 코드는 괄호 안에.
+# §38/§42 — 경영진용 모델 표기. 의미를 먼저, 코드는 괄호 안에.
 # ---------------------------------------------------------------------------
 LABEL = {
-    "actual": "실제 WPU1012 지수",
+    "actual": "실제 WPU1012",
     "N0": "직전 가용치 그대로 (N0)",
     "M0": "과거 PPI 기반 (M0)",
-    "M1": "시장·산업 정보 추가 (M1)",
+    "M1_star": "시장·산업 정보 추가 (M1*)",
+    "ME_star": "Event 정보만 추가 (ME*)",
+    "M2_star": "공식 Event 정보 추가 (M2*)",
+    "M1_official": "시장·산업 정보 추가 (M1, 구버전)",
     "M2_V2": "공식 Event 확장 V2 (M2-V2)",
     "M2_V3": "Event 표현 고도화 V3 (M2-V3)",
-    "M1_shared": "동일 규제 시장정보 (M1-shared)",
-    "M2_shared": "동일 규제 + Event (M2-shared)",
-    "M1R": "시장정보 보정 모델 (M1-R)",
-    "M2R": "Event 정보 보정 모델 (M2-R)",
+    "M1R": "시장정보 보정 V4 (M1-R)",
+    "M2R": "Event 정보 보정 V4 (M2-R)",
+    "M0_ctrl": "과거 PPI 기반 · 통제 (M0)",
+    "M1_ctrl": "시장·산업 정보 · 통제 (M1)",
+    "ME_ctrl": "Event 정보만 · 통제 (ME)",
+    "M2_ctrl": "시장 + Event · 통제 (M2)",
 }
-SHORT = {"N0": "N0", "M0": "M0", "M1": "M1", "M2_V2": "M2-V2", "M2_V3": "M2-V3",
-         "M1_shared": "M1-shared", "M2_shared": "M2-shared",
-         "M1R": "M1-R", "M2R": "M2-R"}
-COLORS = {"actual": "#111827", "N0": "#9CA3AF", "M0": "#2563EB", "M1": "#059669",
-          "M2_V2": "#D97706", "M2_V3": "#BE185D", "M1_shared": "#0891B2",
-          "M2_shared": "#7C3AED", "M1R": "#0D9488", "M2R": "#DB2777"}
+COLORS = {"actual": "#111827", "N0": "#9CA3AF", "M0": "#2563EB",
+          "M1_star": "#0D9488", "ME_star": "#F59E0B", "M2_star": "#DB2777",
+          "M1_official": "#059669", "M2_V2": "#D97706", "M2_V3": "#BE185D",
+          "M1R": "#0891B2", "M2R": "#7C3AED",
+          "M0_ctrl": "#2563EB", "M1_ctrl": "#0D9488", "ME_ctrl": "#F59E0B",
+          "M2_ctrl": "#DB2777"}
 UP_COLOR, DOWN_COLOR = "#DC2626", "#2563EB"
 
-#: §40 — 스크린샷이 홀로 돌아다녀도 문맥이 남도록 그림 **안에** 넣는 각주.
+#: §42 — 스크린샷이 홀로 돌아다녀도 문맥이 남도록 그림 **안에** 넣는 각주.
 FOOT_TARGET = ("Target: BLS WPU1012 — Iron and steel scrap PPI  ·  "
-               "주의: 실제 $/ton 현물가격이 아니라 생산자물가지수입니다")
+               "주의: 실제 $/ton 거래가격이 아니라 미국 철·강 스크랩 생산자물가지수")
 FOOT_EVENT = ("PEP/NEP: 공식 Event 를 경제적 전달경로에 따라 구조화한 상·하방 "
-              "pressure score이며 확률이 아님")
+              "pressure score이며 확률이 아닙니다")
 
 st.set_page_config(page_title="철·강 스크랩 PPI 예측 Demo",
                    page_icon="🏭", layout="wide")
@@ -68,17 +78,20 @@ st.set_page_config(page_title="철·강 스크랩 PPI 예측 Demo",
 def load():
     d = {}
     for key, name in (
+        ("v5_metrics", "demo_v5_metrics.csv"),
+        ("v5_preds", "demo_v5_predictions.csv"),
+        ("v5_sel", "demo_v5_selected_models.csv"),
+        ("v5_attr", "demo_v5_event_attribution.csv"),
+        ("v5_cmp", "demo_v5_comparisons.csv"),
+        ("channels", "event_channel_panel_v5.csv"),
+        ("x_registry", "x_feature_registry.csv"),
         ("official_metrics", "metrics.csv"),
+        ("v3_metrics", "demo_v3_metrics.csv"),
+        ("v4_metrics", "demo_v4_metrics.csv"),
         ("episodes", "event_episode_registry_v3.csv"),
         ("transitions", "event_transition_registry_v3.csv"),
         ("pressure_v3", "pep_nep_v3.csv"),
         ("cat_state", "event_monthly_category_state_v3.csv"),
-        ("contrib", "event_contribution_v3.csv"),
-        ("v4_metrics", "demo_v4_metrics.csv"),
-        ("v4_preds", "demo_v4_predictions.csv"),
-        ("v4_attr", "demo_v4_event_attribution.csv"),
-        ("v4_selected", "demo_v4_selected_models.csv"),
-        ("x_registry", "x_feature_registry.csv"),
     ):
         d[key] = pd.read_csv(DATA / name)
     d["meta"] = json.loads((DATA / "run_metadata.json").read_text(encoding="utf-8"))
@@ -90,36 +103,34 @@ meta = D["meta"]
 tgt = meta["target"]
 k = meta["kpi"]
 v3 = meta["demo_v3"]
-v4 = meta["demo_v4"]
+v5 = meta["demo_v5"]
+OPS = v5["operational"]
+CTRL = v5["controlled"]
 
 
 # ---------------------------------------------------------------------------
-# 차트 헬퍼 — §PART Q 규약을 한 곳에서 강제한다
+# 차트 헬퍼 — §PART K 규약을 한 곳에서 강제한다
 # ---------------------------------------------------------------------------
 
 def finish(fig: go.Figure, *, title: str, question: str | None = None,
            ylab: str = "", xlab: str = "", footnote: str | None = None,
-           height: int = 420, legend: bool = True,
+           height: int = 430, legend: bool = True,
            yrange: list | None = None) -> go.Figure:
-    """제목·질문·축·각주·범례를 **그림 안에** 넣어 스크린샷 자립성을 확보한다."""
     head = f"<b>{title}</b>"
     if question:
         head = (f"<span style='font-size:12px;color:#6B7280'>{question}</span>"
                 f"<br>{head}")
-    bottom = 66 if footnote else 44
     fig.update_layout(
         title=dict(text=head, x=0.0, xanchor="left", y=0.96, yanchor="top",
                    font=dict(size=17, color="#111827")),
-        height=height,
-        yaxis_title=ylab, xaxis_title=xlab,
+        height=height, yaxis_title=ylab, xaxis_title=xlab,
         hovermode="x unified",
-        margin=dict(t=96 if question else 78, b=bottom, l=64, r=24),
-        font=dict(size=13),
-        plot_bgcolor="white", paper_bgcolor="white",
+        margin=dict(t=96 if question else 78, b=66 if footnote else 44,
+                    l=64, r=24),
+        font=dict(size=13), plot_bgcolor="white", paper_bgcolor="white",
         legend=dict(orientation="h", yanchor="bottom", y=1.005, xanchor="left",
                     x=0.0, font=dict(size=12.5)) if legend else None,
-        showlegend=legend,
-    )
+        showlegend=legend)
     if yrange:
         fig.update_yaxes(range=yrange)
     fig.update_xaxes(showgrid=True, gridcolor="#F1F5F9", zeroline=False)
@@ -133,7 +144,6 @@ def finish(fig: go.Figure, *, title: str, question: str | None = None,
 
 
 def takeaway(text: str) -> None:
-    """§39 — 저장된 수치에서 계산한 한 줄 핵심 해석."""
     st.markdown(
         f"<div style='background:#F8FAFC;border-left:4px solid #2563EB;"
         f"padding:10px 14px;margin:6px 0 18px 0;border-radius:4px;"
@@ -142,20 +152,27 @@ def takeaway(text: str) -> None:
         unsafe_allow_html=True)
 
 
+def reading_guide(how: str, now: str, caution: str) -> None:
+    """§41 — 이 그래프를 보는 법 / 현재 결과 해석 / 해석 시 주의."""
+    with st.expander("이 그래프를 보는 법"):
+        st.markdown(f"**보는 법** — {how}")
+        st.markdown(f"**현재 결과 해석** — {now}")
+        st.markdown(f"**해석 시 주의** — {caution}")
+
+
 def show(fig: go.Figure) -> None:
-    st.plotly_chart(fig, width="stretch",
-                    config={"displayModeBar": False})
+    st.plotly_chart(fig, width="stretch", config={"displayModeBar": False})
 
 
-def m(view: str, model: str) -> float:
-    """저장된 V4 지표표에서 MAE 를 꺼낸다."""
-    r = D["v4_metrics"]
-    s = r[(r["view"] == view) & (r["model"] == model)]
-    return float(s["mae"].iloc[0])
+def mae(view: str, model: str) -> float:
+    r = D["v5_metrics"]
+    return float(r[(r["view"] == view) & (r["model"] == model)]["mae"].iloc[0])
 
+
+N0 = mae("OFFICIAL_REFERENCE", "N0")
 
 # ---------------------------------------------------------------------------
-# 헤더 (§PART M)
+# 헤더
 # ---------------------------------------------------------------------------
 st.title("미국 철·강 스크랩 생산자물가지수(PPI) 예측 Demo")
 st.markdown(f"#### BLS {tgt['series_id']} — {tgt['name_en']}")
@@ -165,110 +182,166 @@ st.markdown(
     "> 각 과거 시점에 실제로 공개되어 있던 정보만 사용해서 다음 달을 예측했습니다."
 )
 
-c = st.columns(7)
-c[0].metric("예측 대상", tgt["series_id"])
-c[1].metric("원천지표", f"{k['clean_pit_ready_x']}개 → 파생 12개")
-c[2].metric("예측 시점", f"{k['n_origins']}개")
-c[3].metric("공식 사건", f"{v3['n_episodes']}건 / {v3['n_transitions']}상태")
-c[4].metric("자동 테스트", f"{k['n_tests']}개")
-c[5].metric("FRED 의존", f"{k['fred_dependency']}")
-c[6].metric("동일 Train/Test", "YES")
-
-st.info(
-    "🎯 **예측 대상** — 실제 $/ton 거래가격이 아니라 **BLS 공식 생산자물가지수(PPI)** "
-    "입니다. 지수 600은 톤당 600달러라는 뜻이 아닙니다."
-)
-
 tabs = st.tabs([
-    "📌 요약", "🎯 무엇을 예측하나", "🧾 어떤 데이터를 쓰나", "📊 성능 비교",
-    "📈 예측 추이", "🌍 사건 압력", "🔍 Event 보정 진단", "🧮 왜 이 모델인가",
-    "🧬 M2 진화", "🔬 Clean-PIT 란", "🤖 Agent Team",
+    "📌 Executive Summary",
+    "🎯 예측 대상 & 데이터",
+    "🌍 Event Intelligence",
+    "🤖 Agent Team",
+    "🗂️ 연구 과정 (Research Archive)",
 ])
 
 # ===========================================================================
-# 0. 요약
+# 1. EXECUTIVE SUMMARY  (§27-§33)
 # ===========================================================================
 with tabs[0]:
-    st.subheader("경영진 요약")
-    st.markdown(meta["executive_summary_md"])
+    d_m1 = 100.0 * (OPS["M1_star"] / OPS["M0"] - 1.0)
+    d_m2 = 100.0 * (OPS["M2_star"] / OPS["M0"] - 1.0)
 
+    c = st.columns(4)
+    c[0].metric("과거 PPI 기반 (M0)", f"{OPS['M0']:.2f}", help="MAE ↓ 낮을수록 정확")
+    c[1].metric("시장·산업 정보 추가 (M1*)", f"{OPS['M1_star']:.2f}",
+                delta=f"{d_m1:+.1f}%", delta_color="inverse")
+    c[2].metric("공식 Event 정보 추가 (M2*)", f"{OPS['M2_star']:.2f}",
+                delta=f"{d_m2:+.1f}%", delta_color="inverse")
+    c[3].metric("예측 시점", f"{k['n_origins']}개",
+                help="같은 시점·같은 학습행·같은 대상월로 모든 모델을 비교했습니다")
+
+    st.markdown(meta["executive_takeaway_md"])
+    st.info(meta["executive_caveat_md"])
+
+    # ---- 주 성능 차트: 세 모델만 (§28) --------------------------------
     st.divider()
-    st.subheader("모델은 이렇게 정보를 쌓습니다 (§PART N)")
+    order = ["M0", "M1_star", "M2_star"]
+    vals = [OPS[m] for m in order]
+    best = int(min(range(3), key=lambda i: vals[i]))
+    fig = go.Figure()
+    for i, m in enumerate(order):
+        fig.add_bar(x=[LABEL[m]], y=[vals[i]], showlegend=False,
+                    marker_color=COLORS[m], text=[f"{vals[i]:.2f}"],
+                    textposition="outside", textfont=dict(size=13),
+                    hovertemplate=f"{LABEL[m]}<br>MAE %{{y:.2f}}<extra></extra>")
+    fig.add_hline(y=N0, line=dict(color="#9CA3AF", width=1.4, dash="dash"))
+    fig.add_annotation(xref="paper", x=0.99, y=N0, xanchor="right",
+                       text=f"단순 기준선 N0 {N0:.1f}", showarrow=False, yshift=11,
+                       font=dict(size=11, color="#6B7280"))
+    fig.add_annotation(x=LABEL[order[best]], y=vals[best],
+                       text="가장 낮은 평균오차", showarrow=True, arrowhead=0,
+                       ax=0, ay=-46, font=dict(size=11.5, color="#111827"),
+                       bgcolor="rgba(255,255,255,0.85)")
+    fig.update_yaxes(range=[0, max(vals + [N0]) * 1.22])
+    show(finish(
+        fig,
+        question="Q. 시장·Event 정보를 추가하면 예측 정확도가 좋아지는가?",
+        title="시장·Event 정보를 추가하면 예측 정확도가 좋아지는가?  "
+              "<span style='font-size:13px;color:#6B7280'>MAE ↓ 낮을수록 정확</span>",
+        ylab="평균 예측오차 MAE (지수 Point)", xlab="",
+        footnote=FOOT_TARGET, height=470, legend=False))
+    takeaway(
+        f"<b>{LABEL[order[best]]}</b> 가 가장 낮은 평균오차 "
+        f"({vals[best]:.2f})를 보였습니다. "
+        f"시장 정보는 M0 대비 <b>{abs(d_m1):.1f}% "
+        f"{'개선' if d_m1 < 0 else '악화'}</b>, "
+        f"Event 정보까지 더하면 <b>{abs(d_m2):.1f}% "
+        f"{'개선' if d_m2 < 0 else '악화'}</b> 입니다.")
+    reading_guide(
+        "막대가 낮을수록 예측이 정확합니다. 점선은 '지난달 값을 그대로 쓰는' "
+        "단순 기준선입니다.",
+        f"시장 정보를 더한 M1* 가 M0 보다 조금 낮고, Event 를 더한 M2* 는 "
+        f"오히려 높습니다.",
+        "차이가 작고 예측 시점이 50개뿐이라 **통계적으로 유의하지 않습니다.** "
+        "'유의하지 않음'과 '효과 없음'은 다릅니다.")
+
+    # ---- 모델 스토리 (§29) --------------------------------------------
+    st.divider()
+    st.markdown("#### 모델은 이렇게 정보를 쌓습니다")
     p = ASSETS / "model_story.png"
     if p.exists():
         st.image(str(p), width="stretch")
     a, b, cc = st.columns(3)
-    a.markdown("**M0 — 과거 PPI 기반**  \n가격 자체가 가진 정보")
-    b.markdown("**M1-R — 시장정보 보정**  \n시장·산업 정보가 추가로 설명한 부분")
-    cc.markdown("**M2-R — Event 정보 보정**  \n공식 Event 정보가 추가로 설명한 부분")
+    a.markdown("**M0 — 과거 PPI 정보**  \n가격 자체가 가진 정보")
+    b.markdown("**M1\\* — + 시장·산업 정보**  \n시장이 추가로 설명한 부분")
+    cc.markdown("**M2\\* — + 공식 Event 정보**  \nEvent 가 추가로 설명한 부분")
 
+    # ---- 실제 vs 예측 (최대 4선, §30) ---------------------------------
     st.divider()
-    best = D["v4_metrics"].loc[D["v4_metrics"]["mae"].idxmin()]
-    st.success(
-        "✅ **모든 비교는 동일한 Train/Test 기준입니다** — "
-        f"같은 예측 시점 {k['n_origins']}개, 같은 학습 행, 같은 대상 월, 같은 지표."
-    )
-    st.warning(
-        f"현재 결과에서 가장 낮은 평균오차는 **{LABEL[best['model']]}** "
-        f"(MAE {best['mae']:.2f}) 이며, 이는 **공식 사전등록 결과**입니다. "
-        "시장·Event 정보를 추가한 확장 모델은 아직 이 값을 넘지 못했습니다 — "
-        "부정적 결과를 그대로 보고합니다."
-    )
+    dd = D["v5_preds"].copy()
+    dd["month"] = pd.to_datetime(dd["target_month"] + "-01")
+    fig = go.Figure()
+    fig.add_scatter(x=dd["month"], y=dd["y_true"], name=LABEL["actual"],
+                    line=dict(color=COLORS["actual"], width=3.2))
+    for m in ("M0", "M1_star", "M2_star"):
+        fig.add_scatter(x=dd["month"], y=dd[m], name=LABEL[m],
+                        line=dict(color=COLORS[m], width=2,
+                                  dash="dot" if m == "M2_star" else None))
+    show(finish(
+        fig,
+        question="Q. 실제 지수의 급등·급락을 어떤 모델이 더 잘 따라갔는가?",
+        title="각 모델은 실제 철·강 스크랩 PPI 움직임을 얼마나 따라가는가",
+        ylab="PPI 지수 (1982-06 = 100)", xlab="대상 월",
+        footnote=FOOT_TARGET, height=500))
+    reading_guide(
+        "검은 선이 실제 지수입니다. 모델 선이 검은 선에 가까울수록 잘 맞힌 것입니다.",
+        "세 모델이 큰 흐름은 비슷하게 따라가며, 급변 구간에서 차이가 벌어집니다.",
+        "**선이 가까워 보이는 것과 통계적으로 유의한 개선은 다릅니다.**")
+
+    # ---- 2x2 (§33) ----------------------------------------------------
+    st.divider()
+    st.markdown("#### 시장 정보와 Event 정보는 각각 도움이 되었는가?")
+    tb = v5["two_by_two"]
+    grid = [[OPS["M0"], OPS["ME_star"]], [OPS["M1_star"], OPS["M2_star"]]]
+    names = [["M0", "ME*"], ["M1*", "M2*"]]
+    fig = go.Figure(go.Heatmap(
+        z=grid, x=["Event 없음", "Event 있음"], y=["시장 없음", "시장 있음"],
+        colorscale="RdYlGn_r", showscale=True,
+        colorbar=dict(title="MAE"), hovertemplate="%{y} / %{x}<br>MAE %{z:.2f}<extra></extra>"))
+    for i in range(2):
+        for j in range(2):
+            fig.add_annotation(
+                x=["Event 없음", "Event 있음"][j], y=["시장 없음", "시장 있음"][i],
+                text=f"<b>{names[i][j]}</b><br>{grid[i][j]:.2f}",
+                showarrow=False, font=dict(size=15, color="#111827"))
+    show(finish(
+        fig, question="Q. 시장과 Event 가 각각 도움이 되었는가?",
+        title="2×2 정보 실험  "
+              "<span style='font-size:13px;color:#6B7280'>MAE ↓ 낮을수록 정확 · "
+              "초록이 좋고 빨강이 나쁨</span>",
+        ylab="", xlab="", footnote=FOOT_TARGET, height=380, legend=False))
+    takeaway(
+        f"시장 정보를 넣으면 오차가 줄고(M0 {OPS['M0']:.2f} → M1* "
+        f"{OPS['M1_star']:.2f}), Event 정보를 넣으면 오차가 늘어납니다 "
+        f"(M0 → ME* {OPS['ME_star']:.2f}, M1* → M2* {OPS['M2_star']:.2f}). "
+        "네 칸 모두 같은 예측 시점·같은 학습 데이터로 계산했습니다.")
+    reading_guide(
+        "왼쪽 위가 가장 단순한 모델, 오른쪽 아래가 정보를 가장 많이 쓴 모델입니다. "
+        "위→아래는 시장 정보 추가, 왼→오른쪽은 Event 정보 추가입니다.",
+        "**시장 정보만 아래쪽으로 갈 때 오차가 줄어듭니다.** Event 정보는 어느 "
+        "방향에서든 오차를 늘렸습니다.",
+        "칸 사이 차이가 작습니다. Event 추가의 악화만이 통제 비교에서 "
+        "통계적으로 뚜렷했습니다.")
 
 # ===========================================================================
-# 1. 무엇을 예측하나 (§PART M)
+# 2. 예측 대상 & 데이터  (§PART M)
 # ===========================================================================
 with tabs[1]:
     st.subheader("무엇을 예측하나")
     st.markdown(meta["target_explainer_md"])
 
     st.divider()
-    st.markdown("#### 지수를 읽는 법 (§24)")
+    st.markdown("#### 지수를 읽는 법")
     a, b = st.columns(2)
-    a.markdown(
-        "**지수 상승 ↑**  \n전반적인 미국 철·강 스크랩 **생산자 가격 수준 상승** 방향")
-    b.markdown(
-        "**지수 하락 ↓**  \n전반적인 **생산자 가격 수준 하락** 방향")
+    a.markdown("**지수 상승 ↑**  \n전반적인 미국 철·강 스크랩 "
+               "**생산자 가격 수준 상승** 방향")
+    b.markdown("**지수 하락 ↓**  \n전반적인 **생산자 가격 수준 하락** 방향")
     st.error(
         "**지수 600 ≠ $600/ton 입니다.**  \n"
         "예: 500 → 550 은 **약 10% 지수 상승**이지 **$50/ton 상승이 아닙니다.** "
-        "지수 차이는 항상 **변화율**로 읽습니다."
-    )
-
-    d = D["v4_preds"].copy()
-    d["month"] = pd.to_datetime(d["target_month"] + "-01")
-    fig = go.Figure()
-    fig.add_scatter(x=d["month"], y=d["y_true"], name=LABEL["actual"],
-                    line=dict(color=COLORS["actual"], width=3.2), fill="tozeroy",
-                    fillcolor="rgba(17,24,39,0.06)")
-    lo, hi = float(d["y_true"].min()), float(d["y_true"].max())
-    imin = d["y_true"].idxmin()
-    imax = d["y_true"].idxmax()
-    for i, txt in ((imax, f"최고 {hi:.0f}"), (imin, f"최저 {lo:.0f}")):
-        fig.add_annotation(x=d.loc[i, "month"], y=d.loc[i, "y_true"], text=txt,
-                           showarrow=True, arrowhead=0, ax=0, ay=-26,
-                           font=dict(size=11.5, color="#374151"))
-    show(finish(fig, question="Q. 예측 대상 지수는 실제로 어떻게 움직였는가?",
-                title="미국 철·강 스크랩 PPI 지수의 실제 궤적",
-                ylab="PPI 지수 (1982-06 = 100)", xlab="대상 월",
-                footnote=FOOT_TARGET, height=400, legend=False))
-    takeaway(
-        f"이 구간에서 지수는 <b>{lo:.0f} ~ {hi:.0f}</b> 사이를 움직였습니다. "
-        f"{lo:.0f} 에서 {hi:.0f} 로 가는 것은 <b>{(hi / lo - 1):+.0%}</b> 변화이며, "
-        f"달러 금액이 아니라 <b>변화율</b>로 읽어야 합니다.")
-
+        "지수 차이는 항상 **변화율**로 읽습니다.")
     st.warning(
         "본 Demo는 특정 기업의 구매가격, 특정 스크랩 grade 의 거래가격, "
-        "또는 $/ton 현물가격을 예측하는 모델이 **아닙니다**."
-    )
+        "또는 $/ton 현물가격을 예측하는 모델이 **아닙니다**.")
 
-# ===========================================================================
-# 2. 어떤 데이터를 쓰나 (§PART A · §6 · §7 · §8 · §9)
-# ===========================================================================
-with tabs[2]:
+    st.divider()
     st.subheader("어떤 시장·산업 데이터를 쓰나")
-
-    st.markdown("#### 6개의 원천지표 → 12개의 파생 Feature (§7)")
     a, b, cc = st.columns([2, 1, 2])
     a.markdown(
         "<div style='background:#EFF6FF;border-radius:8px;padding:16px;"
@@ -284,15 +357,13 @@ with tabs[2]:
         "text-align:center'><b style='font-size:28px;color:#059669'>12</b><br>"
         "<b>파생 Feature</b><br><span style='font-size:12.5px;color:#6B7280'>"
         "6 × 2 형태</span></div>", unsafe_allow_html=True)
-
     st.error(
         "**12개의 서로 다른 외부 데이터셋이 아닙니다.** "
         "6개의 검증된 원천지표에서 2개 형태(수준 · 3개월 변화)의 feature 를 "
-        "생성한 것입니다."
-    )
+        "생성한 것입니다.")
 
-    st.markdown("#### 원천지표 설명 (§6)")
-    xr = D["x_registry"].copy()
+    st.markdown("#### 원천지표 설명")
+    xr = D["x_registry"]
     st.dataframe(
         xr[["series_id", "official_name", "source", "measures",
             "possible_channel", "derived_features"]]
@@ -303,183 +374,54 @@ with tabs[2]:
         hide_index=True, width="stretch")
     st.caption(
         "‘관련 가능한 경로’는 **가능한 관련 경로**를 서술한 것이며 인과관계 주장이 "
-        "아닙니다. 공식 계열명·출처·발간물은 프로젝트 registry 에 기록된 값입니다.")
+        "아닙니다. 공식 계열명·출처는 프로젝트 registry 에 기록된 값입니다.")
 
-    st.divider()
-    st.markdown("#### 왜 이 6개인가 (§8)")
-    st.markdown(
-        "단순히 상관이 높은 변수를 넣은 것이 아닙니다. Primary 모델에는 다음 조건을 "
-        "**모두** 만족한 Clean-PIT 계열만 사용했습니다.\n\n"
-        "- **원기관 원문 출처** — FRED 같은 재배포처가 아니라 BLS · Federal Reserve 원문\n"
-        "- **충분한 과거 커버리지** — 학습에 필요한 기간이 실제로 존재\n"
-        "- **Point-in-Time 재구성 가능** — 그 시점에 발표되어 있던 값을 복원 가능\n"
-        "- **발표일 검증** — 언제 공개됐는지를 문서로 확인\n"
-        "- **개정(revision) 처리** — 이후 수정본이 과거로 새어들지 않음\n"
-        "- **재현 가능성** — 매월 같은 경로로 갱신 가능\n"
-        "- **공개 배포 안전성** — 저작권·이용약관상 공개 Demo 에 적합"
-    )
-    st.info(
-        f"**{meta['x_explainer']['historical_only_note']}**"
-    )
-
-    st.divider()
-    st.markdown("#### 출처 · 저작권 (§9)")
-    st.markdown(
-        "이 Demo 는 **Series ID · 출처 기관 · 짧은 요약 설명 · 파생 결과**만 "
-        "사용합니다. 원문 PDF/XLSX, 공식 문서 전문, 기사 본문, 제3자 설명문, "
-        "로고, 자격증명, 회사 내부 정보는 **포함하지 않습니다.**"
-    )
-    st.success(f"이번 단계에서 **새로운 외부 데이터 소스를 추가하지 않았습니다** — "
-               f"{meta['x_explainer']['future_work_note']}")
-
-# ===========================================================================
-# 3. 성능 비교 (§PART J · §25 · §33 · §37)
-# ===========================================================================
-with tabs[3]:
-    st.subheader("모델 성능 비교")
-    st.markdown(
-        "**공식 사전등록 결과(N0/M0/M1)와 탐색적 확장(M2·M1-R·M2-R)을 분리해서** "
-        "보여줍니다. 모두 같은 예측 시점·같은 학습 행·같은 대상 월입니다."
-    )
-
-    vm = D["v4_metrics"].copy()
-    view_names = {
-        "VIEW_A_OFFICIAL": "A. 공식 사전등록 (N0 / M0 / M1)",
-        "VIEW_B_HISTORICAL_DEMO": "B. 과거 Event Demo (M2-V2 / M2-V3)",
-        "VIEW_C_SHARED_ALPHA": "C. 동일 규제 대조 (M1-shared / M2-shared)",
-        "VIEW_D_MAIN_V4": "D. V4 단계 보정 (M0 → M1-R → M2-R)",
-    }
-    picks = st.multiselect(
-        "표시할 비교 그룹", list(view_names), default=list(view_names),
-        format_func=lambda v: view_names[v])
-    sub = vm[vm["view"].isin(picks)].copy()
-    sub = sub.drop_duplicates(subset=["view", "model"])
-    sub["라벨"] = sub["model"].map(SHORT)
-    sub["표시"] = sub.apply(
-        lambda r: f"{SHORT[r['model']]}<br><span style='font-size:10px'>"
-                  f"{'공식' if r['status'] == 'OFFICIAL_PREREGISTERED' else '탐색'}"
-                  f"</span>", axis=1)
-
-    best_i = sub["mae"].idxmin()
-    fig = go.Figure()
-    for _, r in sub.iterrows():
-        official = r["status"] == "OFFICIAL_PREREGISTERED"
-        fig.add_bar(
-            x=[r["표시"]], y=[r["mae"]], showlegend=False,
-            marker=dict(color=COLORS[r["model"]],
-                        line=dict(color="#111827" if official else "#FFFFFF",
-                                  width=2 if official else 0)),
-            text=[f"{r['mae']:.1f}"], textposition="outside",
-            textfont=dict(size=12),
-            hovertemplate=f"{LABEL[r['model']]}<br>MAE %{{y:.2f}}<extra></extra>")
-    br = sub.loc[best_i]
-    fig.add_annotation(
-        x=br["표시"], y=br["mae"], text="가장 낮은 평균오차<br>(공식 결과)"
-        if br["status"] == "OFFICIAL_PREREGISTERED" else "가장 낮은 평균오차<br>(탐색)",
-        showarrow=True, arrowhead=0, ax=0, ay=-46,
-        font=dict(size=11.5, color="#111827"), bgcolor="rgba(255,255,255,0.85)")
-    show(finish(
-        fig,
-        question="Q. 시장·Event 정보를 추가하면 예측 정확도가 좋아지는가?",
-        title="시장·Event 정보를 추가하면 예측 정확도가 좋아지는가?  "
-              "<span style='font-size:13px;color:#6B7280'>MAE ↓ 낮을수록 정확</span>",
-        ylab="평균 예측오차 MAE (지수 Point)", xlab="모델",
-        footnote=FOOT_TARGET + "  ·  테두리 있는 막대 = 공식 사전등록 결과",
-        height=470, legend=False))
-
-    m0 = m("VIEW_A_OFFICIAL", "M0")
-    takeaway(
-        f"현재 결과에서는 <b>과거 PPI 기반 (M0)</b> 이 가장 낮은 평균오차 "
-        f"(MAE {m0:.2f})를 보였습니다. 시장 정보를 더한 M1 은 {m('VIEW_A_OFFICIAL','M1'):.2f}, "
-        f"V4 의 단계 보정 모델 M1-R 은 {m('VIEW_D_MAIN_V4','M1R'):.2f}, "
-        f"M2-R 은 {m('VIEW_D_MAIN_V4','M2R'):.2f} 로 <b>모두 M0 보다 나빴습니다.</b>")
-
-    st.markdown("##### 전체 수치")
-    disp = sub.copy()
-    disp["모델"] = disp["model"].map(LABEL)
-    disp["지위"] = disp["status"].map(
-        {"OFFICIAL_PREREGISTERED": "공식 사전등록", "EXPLORATORY": "탐색적 확장"})
-    st.dataframe(
-        disp[["모델", "mae", "rmse", "smape", "directional_accuracy", "지위"]]
-        .rename(columns={"mae": "MAE ↓", "rmse": "RMSE ↓", "smape": "sMAPE ↓",
-                         "directional_accuracy": "방향 정확도 ↑"})
-        .style.format({"MAE ↓": "{:.2f}", "RMSE ↓": "{:.2f}", "sMAPE ↓": "{:.3f}",
-                       "방향 정확도 ↑": "{:.2f}"}),
-        hide_index=True, width="stretch")
-
-    st.divider()
-    st.markdown("#### 동일 규제 대조가 밝혀낸 것 (§20)")
-    ms1, ms2 = m("VIEW_C_SHARED_ALPHA", "M1_shared"), m("VIEW_C_SHARED_ALPHA", "M2_shared")
-    v3d = m("VIEW_B_HISTORICAL_DEMO", "M2_V3")
-    a, b, cc = st.columns(3)
-    a.metric("M2-V3 − M1 (V3, 규제 재선택 허용)", f"{v3d - ms1:+.3f}")
-    b.metric("M2-shared − M1-shared (규제 고정)", f"{ms2 - ms1:+.3f}")
-    cc.metric("Event 정보가 아니었던 몫",
-              f"{100 * (1 - (ms2 - ms1) / (v3d - ms1)):.0f}%")
-    st.info(meta["v4_shared_alpha_md"])
-
-    st.divider()
-    with st.expander("공식 사전등록 결과 원본 (수정하지 않음)"):
-        om = D["official_metrics"]
-        st.dataframe(
-            om[om["target_id"] == tgt["series_id"]][
-                ["model", "n_origins", "mae", "rmse", "status"]]
-            .rename(columns={"model": "모델", "n_origins": "시점 수",
-                             "mae": "MAE", "rmse": "RMSE", "status": "지위"})
-            .style.format({"MAE": "{:.2f}", "RMSE": "{:.2f}"}),
-            hide_index=True, width="stretch")
-        pi = meta["primary_inference"]
+    with st.expander("왜 이 6개인가"):
         st.markdown(
-            f"사전등록된 주요 가설(M0 vs M1): 상대 개선 **{pi['skill']:+.1%}**, "
-            f"DM 검정 p = **{pi['dm_p']:.3f}**, 95% 신뢰구간 "
-            f"[{pi['ci_low']:.1f}, {pi['ci_high']:.1f}] — 개선 증거 없음.")
-    st.markdown(meta["result_reading_md"])
+            "단순히 상관이 높은 변수를 넣은 것이 아닙니다. Primary 모델에는 다음 "
+            "조건을 **모두** 만족한 Clean-PIT 계열만 사용했습니다.\n\n"
+            "- **원기관 원문 출처** — 재배포 플랫폼이 아니라 BLS · Federal Reserve 원문\n"
+            "- **충분한 과거 커버리지** — 학습에 필요한 기간이 실제로 존재\n"
+            "- **Point-in-Time 재구성 가능** — 그 시점에 발표되어 있던 값을 복원 가능\n"
+            "- **발표일 검증** · **개정(revision) 처리** · **매월 재현 가능**\n"
+            "- **공개 배포 안전성** — 저작권·이용약관상 공개 Demo 에 적합")
+        st.info(meta["x_explainer"]["historical_only_note"])
+        st.success(f"이번 단계에서도 **새로운 외부 데이터 소스를 추가하지 "
+                   f"않았습니다** — {meta['x_explainer']['future_work_note']}")
+
+    st.divider()
+    st.markdown("#### 왜 Clean-PIT 인가")
+    a, b = st.columns(2)
+    a.markdown("**⚠️ 기존 방식의 위험**  \n과거를 모델링할 때 **현재 최종 수정된 "
+               "과거 데이터**를 쓰면, 그 시점에는 알 수 없었던 정보가 모델에 "
+               "들어갑니다. 경제지표는 최초 발표 후 여러 차례 개정됩니다.")
+    b.markdown(f"**✅ 본 프로젝트의 방식**  \n2023년 시점을 예측할 때 2026년에 "
+               f"수정된 최종 {tgt['series_id']} 값을 쓰는 것이 아니라, 당시 실제로 "
+               "공개되어 있던 값만 사용합니다.")
+    st.dataframe(pd.DataFrame(meta["revision_examples"]), hide_index=True,
+                 width="stretch")
 
 # ===========================================================================
-# 4. 예측 추이 (§26)
+# 3. EVENT INTELLIGENCE  (§PART L)
 # ===========================================================================
-with tabs[4]:
-    st.subheader("각 모델이 실제 움직임을 얼마나 따라갔나")
-    d = D["v4_preds"].copy()
-    d["month"] = pd.to_datetime(d["target_month"] + "-01")
-    d = d.rename(columns={"M0_official": "M0off", "M1_official": "M1off"})
+with tabs[2]:
+    st.subheader("공식 Event 정보는 예측에 무엇을 더하는가")
+    st.markdown(meta["v5_event_md"])
 
-    options = ["M0", "M1", "M2_V3", "M1R", "M2R", "N0"]
-    colmap = {"M0": "M0", "M1": "M1off", "M2_V3": "M2_V3", "M1R": "M1R",
-              "M2R": "M2R", "N0": "N0"}
-    picks = st.multiselect("표시할 모델", options, default=["M0", "M1R", "M2R"],
-                           format_func=lambda x: LABEL[x])
+    q = st.columns(4)
+    ev_m2 = v5["event_m2"]
+    q[0].metric("Event 를 쓴 예측시점", f"{ev_m2['event_used_pct']:.0f}%",
+                help="나머지는 모델이 학습 근거를 보고 쓰지 않기로 선택했습니다")
+    q[1].metric("중앙값 보정폭", f"{ev_m2['median_abs_impact']:.1f}",
+                help="지수 Point. 0 이면 예측이 전혀 안 움직였다는 뜻입니다")
+    q[2].metric("공식 사건", f"{v3['n_episodes']}건 / {v3['n_transitions']}상태")
+    q[3].metric("V4 대비 개선",
+                f"{100 * (1 - OPS['M2_star'] / mae('HISTORICAL_DEMO', 'M2R')):+.0f}%",
+                help="V4 의 Event 모델(M2-R) 대비 MAE 개선")
 
-    fig = go.Figure()
-    fig.add_scatter(x=d["month"], y=d["y_true"], name=LABEL["actual"],
-                    line=dict(color=COLORS["actual"], width=3.2))
-    for mm in picks:
-        fig.add_scatter(x=d["month"], y=d[colmap[mm]], name=LABEL[mm],
-                        line=dict(color=COLORS[mm], width=2,
-                                  dash="dot" if mm in ("M2R", "M2_V3") else None))
-    show(finish(
-        fig,
-        question="Q. 실제 지수의 급등·급락을 어떤 모델이 더 잘 따라갔는가?",
-        title="각 모델이 실제 철·강 스크랩 PPI 움직임을 얼마나 따라갔는가",
-        ylab="PPI 지수 (1982-06 = 100)", xlab="대상 월",
-        footnote=FOOT_TARGET, height=520))
-    err = {mm: float((d["y_true"] - d[colmap[mm]]).abs().mean()) for mm in picks}
-    if err:
-        bestm = min(err, key=err.get)
-        takeaway(
-            f"표시된 모델 중 실제값에 가장 가까웠던 것은 <b>{LABEL[bestm]}</b> "
-            f"(평균 오차 {err[bestm]:.1f} 지수 Point)입니다. "
-            "다만 <b>선이 가까워 보이는 것과 통계적으로 유의한 개선은 다릅니다</b> — "
-            f"예측 시점 {len(d)}개로는 검정력이 제한적입니다.")
-    st.caption(
-        f"{len(d)}개 시점 · {d['month'].min():%Y-%m} ~ {d['month'].max():%Y-%m} · "
-        "각 시점에서 그 당시 알 수 있던 정보만으로 다음 달을 예측했습니다.")
-
-# ===========================================================================
-# 5. 사건 압력 (§27 · §32)
-# ===========================================================================
-with tabs[5]:
-    st.subheader("공식 사건 기반 압력 지표 (PEP / NEP)")
+    # ---- 1. PEP / NEP --------------------------------------------------
+    st.divider()
+    st.markdown("#### 1. PEP / NEP 란 무엇인가")
     st.markdown(
         "**뉴스기사 원문 대신 공식적으로 확인된 사건·상태를 구조화하여 두 개의 "
         "압력 변수로 변환했습니다.**\n\n"
@@ -487,22 +429,12 @@ with tabs[5]:
         "- **NEP ↑** — 공식 Event 근거상 **가격 하락 압력**이 강해짐\n"
         "- **둘 다 높음** — 상·하방 근거가 동시에 존재하는 **상충 환경**\n"
         "- **둘 다 낮음** — 조용한 Event 환경\n\n"
-        "긍/부정 뉴스 감성이 아니며, **확률이 아닙니다.** 두 지표는 독립입니다."
-    )
-
-    q = st.columns(6)
-    q[0].metric("사안(episode)", f"{v3['n_episodes']}건")
-    q[1].metric("상태 변화(transition)", f"{v3['n_transitions']}건")
-    q[2].metric("분류 수 K", v3["K"])
-    q[3].metric("이력 시작", v3["first_known_at"])
-    q[4].metric("PEP 값 종류", v3["coverage"]["pep_distinct"])
-    q[5].metric("공식 출처 도메인", v3["n_source_hosts"])
+        "긍/부정 뉴스 감성이 아니며, **확률이 아닙니다.** 두 지표는 독립입니다.")
 
     pp = D["pressure_v3"].copy()
     pp["month_dt"] = pd.to_datetime(pp["month"] + "-01")
     lo = pd.Timestamp(meta["common_support"]["first_train_month"] + "-01")
     pp = pp[pp["month_dt"] >= lo]
-
     fig = go.Figure()
     fig.add_scatter(x=pp["month_dt"], y=pp["PEP"], name="상방 Event 압력 (PEP)",
                     line=dict(color=UP_COLOR, width=2.4), fill="tozeroy",
@@ -510,336 +442,164 @@ with tabs[5]:
     fig.add_scatter(x=pp["month_dt"], y=pp["NEP"], name="하방 Event 압력 (NEP)",
                     line=dict(color=DOWN_COLOR, width=2.4))
     show(finish(
-        fig,
-        question="Q. 공식 Event 가 가격 상·하방 압력을 얼마나 만들었는가?",
+        fig, question="Q. 공식 Event 가 가격 상·하방 압력을 얼마나 만들었는가?",
         title="공식 Event 가 가격 상·하방 압력을 얼마나 만들었는가  "
               "<span style='font-size:13px;color:#6B7280'>"
-              "PEP ↑ 상방 압력 강함 · NEP ↑ 하방 압력 강함</span>",
+              "PEP ↑ 상방 압력 · NEP ↑ 하방 압력</span>",
         ylab="Event 압력 (0 ~ 1, 확률 아님)", xlab="월",
-        footnote=FOOT_EVENT, height=440, yrange=[0, 1]))
-    takeaway(
-        f"평가 구간에서 상방 압력(PEP)은 서로 다른 값 "
-        f"{v3['coverage']['pep_distinct']}개로 실제로 움직였습니다. "
-        "새로 발생한 조치일수록 강하고, 오래 유지된 상태는 낮은 수준으로 "
-        "가라앉습니다 — 몇 년째 유지 중인 관세는 ‘압력’이 아니라 ‘baseline’ 이기 "
-        "때문입니다.")
+        footnote=FOOT_EVENT, height=420, yrange=[0, 1]))
 
-    st.markdown("#### 분류별 압력")
-    cs = D["cat_state"].copy()
-    cs["month_dt"] = pd.to_datetime(cs["month"] + "-01")
-    cs = cs[cs["month_dt"] >= lo]
-    direction = st.radio("방향", ["상방 압력 (PEP)", "하방 압력 (NEP)"], index=0,
-                         horizontal=True, key="cat_dir")
-    col = "up" if direction.startswith("상방") else "down"
+    # ---- 2. State vs Shock --------------------------------------------
+    st.divider()
+    st.markdown("#### 2. Event 상태(State) vs Event 충격(Shock)")
+    st.markdown(
+        "같은 Event 라도 **이미 알려진 지속 상태**와 **이번 달에 새로 바뀐 것**은 "
+        "다른 정보입니다.\n\n"
+        "- **State** = `PEP`, `NEP` — 지금 어떤 압력 환경인가\n"
+        "- **Shock** = `ΔPEP`, `ΔNEP` — 이번 달에 무엇이 **새로** 바뀌었나\n\n"
+        "시장은 몇 년째 유지 중인 관세보다 **새로 발표된 조치**에 더 반응할 수 "
+        "있습니다. V5 는 이 둘을 분리해 시험했습니다.")
+    dd = D["v5_preds"].copy()
+    dd["month"] = pd.to_datetime(dd["target_month"] + "-01")
     fig = go.Figure()
-    for label, grp in cs.groupby("category_label"):
-        if grp[col].max() == 0:
-            continue
-        fig.add_scatter(x=grp["month_dt"], y=grp[col], name=label,
-                        line=dict(width=1.8))
+    fig.add_bar(x=dd["month"], y=dd["dPEP"], name="상방 압력 변화 (ΔPEP)",
+                marker_color=UP_COLOR)
+    fig.add_bar(x=dd["month"], y=dd["dNEP"], name="하방 압력 변화 (ΔNEP)",
+                marker_color=DOWN_COLOR)
+    fig.add_hline(y=0, line=dict(color="#6B7280", width=1.2))
+    show(finish(
+        fig, question="Q. Event 환경이 이번 달에 새로 바뀐 부분은 얼마인가?",
+        title="Event 충격 — 전월 대비 압력 변화",
+        ylab="압력 변화 (전월 대비)", xlab="대상 월",
+        footnote=FOOT_EVENT, height=380))
+
+    # ---- 3. 세 개의 거시 채널 ------------------------------------------
+    st.divider()
+    st.markdown("#### 3. 세 가지 경제 Event 채널")
+    st.markdown(
+        "하나의 PEP/NEP 쌍은 경제적으로 서로 다른 여러 메커니즘을 한데 묶습니다. "
+        "그래서 **동결된 공식 사건 분류를 3개 채널로 묶어** 각각의 충격을 따로 "
+        "만들었습니다.")
+    ch = st.columns(3)
+    for col, (cid, cats) in zip(ch, v5["channels"].items()):
+        lbl = {"A_TRADE_POLICY": "철강·무역 정책",
+               "B_GEO_SUPPLY": "지정학·공급",
+               "C_DEMAND_MACRO": "수요·거시 충격"}[cid]
+        col.markdown(f"**{lbl}**  \n" + "  \n".join(f"· {c}" for c in cats))
+
+    cf = D["channels"].copy()
+    cf["month_dt"] = pd.to_datetime(cf["month"] + "-01")
+    cf = cf[cf["month_dt"] >= lo]
+    fig = go.Figure()
+    for cid, colr in (("A_TRADE_POLICY", "#DC2626"),
+                      ("B_GEO_SUPPLY", "#2563EB"),
+                      ("C_DEMAND_MACRO", "#059669")):
+        lbl = {"A_TRADE_POLICY": "철강·무역 정책",
+               "B_GEO_SUPPLY": "지정학·공급",
+               "C_DEMAND_MACRO": "수요·거시 충격"}[cid]
+        fig.add_scatter(x=cf["month_dt"], y=cf[f"net_{cid}"], name=lbl,
+                        line=dict(color=colr, width=2))
+    fig.add_hline(y=0, line=dict(color="#6B7280", width=1.2))
     show(finish(
         fig, question="Q. 어떤 종류의 공식 Event 가 압력을 만들었는가?",
-        title=f"분류별 {direction}",
-        ylab=f"{direction} (0 ~ 1)", xlab="월", footnote=FOOT_EVENT,
-        height=420, yrange=[0, 1]))
-    empty_cats = sorted(set(cs["category_label"]) -
-                        set(cs[cs["up"] > 0]["category_label"]) -
-                        set(cs[cs["down"] > 0]["category_label"]))
-    if empty_cats:
-        st.caption(
-            f"기록이 없는 분류: {', '.join(empty_cats)} — 월을 채우려고 사건을 "
-            "만들지 않았습니다. 집계 방식상 빈 분류는 다른 분류를 희석하지 않습니다.")
+        title="채널별 순 압력 (상방 − 하방)",
+        ylab="순 Event 압력 (+상방 / −하방)", xlab="월",
+        footnote=FOOT_EVENT, height=400))
+    bc = v5["by_channel"]
+    takeaway(
+        f"철강·무역 정책과 지정학·공급 채널은 평가 구간 "
+        f"<b>50개월 내내 활성</b>이고, 수요·거시 충격 채널은 "
+        f"<b>{bc['C_DEMAND_MACRO']['n_active']}개월</b>만 활성입니다. "
+        "따라서 <b>어떤 채널이 더 유용한지는 이 표본으로 판별할 수 없습니다.</b> "
+        "월을 채우려고 사건을 만들지 않았습니다.")
 
-    st.markdown("#### 사안과 상태 변화 (전부 공식 출처)")
-    eps, trs = D["episodes"], D["transitions"]
-    cats = st.multiselect("분류", sorted(eps["category_label"].unique()),
-                          default=sorted(eps["category_label"].unique()))
-    for _, e in eps[eps["category_label"].isin(cats)].iterrows():
-        mine = trs[trs["episode_id"] == e["episode_id"]].sort_values("known_at_date")
-        with st.expander(f"{e['episode_name']}  ·  {e['category_label']}  ·  "
-                         f"상태 변화 {len(mine)}건  ({e['first_known_at']} ~ "
-                         f"{e['last_known_at']})"):
-            g = st.columns(3)
-            g[0].markdown(f"**직접성 (directness)**\n\n`{e['directness']} / 3`")
-            g[1].markdown(f"**범위 (scope)**\n\n`{e['scope']} / 3`")
-            g[2].markdown(
-                f"**종료**\n\n`{e['end_date'] if isinstance(e['end_date'], str) and e['end_date'] else '진행 중'}`")
-            st.markdown(f"**경제적 경로** — {e['economic_channel']}")
-            for _, t in mine.iterrows():
-                st.markdown(
-                    f"- `{t['known_at_date']}` **{t['stage']}** "
-                    f"(확실성 {t['certainty']:.2f} · 기본강도 "
-                    f"{t['base_strength']:.3f} · 상방 {t['direction_up']:.2f} / "
-                    f"하방 {t['direction_down']:.2f})  \n"
-                    f"  {t['short_summary']}  \n"
-                    f"  [{t['official_source_name']}]({t['official_source_url']})")
+    # ---- 4. Raw vs Novel ----------------------------------------------
+    st.divider()
+    st.markdown("#### 4. 원본 Event vs 새로운 Event 정보 (Novel)")
+    st.markdown(meta["v5_novel_md"])
+
+    # ---- 5. Event 신뢰도 (§44) -----------------------------------------
+    st.divider()
+    st.markdown("#### 5. 모델이 Event 정보를 얼마나 신뢰했는가")
+    at = D["v5_attr"].copy()
+    at["month"] = pd.to_datetime(at["target_month"] + "-01")
+    fig = go.Figure()
+    fig.add_bar(x=at["month"], y=at["lambda_E_M2"], showlegend=False,
+                marker_color=["#DB2777" if v > 0 else "#D1D5DB"
+                              for v in at["lambda_E_M2"]],
+                hovertemplate="%{x|%Y-%m}<br>신뢰도 %{y:.2f}<extra></extra>")
+    show(finish(
+        fig, question="Q. 모델은 언제 Event 정보를 믿기로 했는가?",
+        title="모델이 Event 정보를 얼마나 신뢰했는가  "
+              "<span style='font-size:13px;color:#6B7280'>"
+              "0 = 사용 안 함 · 0.5 = 일부만 반영 · 1 = 전부 반영</span>",
+        ylab="Event 신뢰도 (0 ~ 1)", xlab="대상 월",
+        footnote="신뢰도는 각 시점의 **과거 학습 데이터만으로** 결정됩니다. "
+                 "최종 정답을 보고 고른 값이 아닙니다.",
+        height=380, legend=False, yrange=[0, 1.05]))
+    takeaway(
+        f"모델은 <b>{ev_m2['no_event_fallback_pct']:.0f}% 의 예측시점에서 Event "
+        f"정보를 쓰지 않기로 스스로 선택</b>했습니다. V4 에서는 Event 가 모든 "
+        "시점에서 강제로 사용되어 예측을 크게 흔들었습니다 — 이 자동 fallback 이 "
+        "그 노이즈를 막았습니다.")
+    reading_guide(
+        "분홍 막대가 높을수록 그 달에 Event 정보를 많이 반영했다는 뜻입니다. "
+        "회색(0)은 아예 쓰지 않은 달입니다.",
+        f"대부분의 달이 회색입니다 — 학습 데이터가 Event 사용을 지지하지 "
+        f"않았습니다.",
+        "신뢰도가 높다고 그 달의 예측이 맞았다는 뜻은 아닙니다.")
+
+    # ---- 6. Event 영향 (§45) -------------------------------------------
+    st.divider()
+    st.markdown("#### 6. Event 정보가 최종 예측값을 얼마나 바꾸었는가")
+    fig = go.Figure()
+    fig.add_bar(x=at["month"], y=at["event_impact_M2"], showlegend=False,
+                marker_color=[UP_COLOR if v > 0 else DOWN_COLOR
+                              for v in at["event_impact_M2"]],
+                hovertemplate="%{x|%Y-%m}<br>%{y:+.1f} 지수 Point<extra></extra>")
+    fig.add_hline(y=0, line=dict(color="#6B7280", width=1.2))
+    show(finish(
+        fig, question="Q. Event 정보가 실제 예측값을 움직였는가?",
+        title="Event 정보가 최종 예측값을 얼마나 바꾸었는가  "
+              "<span style='font-size:13px;color:#6B7280'>"
+              "+ = 더 높은 지수 예측 · − = 더 낮은 지수 예측</span>",
+        ylab="Event 보정폭 (지수 Point)", xlab="대상 월",
+        footnote="예측모델 내 추가 정보의 영향이며, 실제 사건의 인과효과 "
+                 "추정치가 아닙니다.",
+        height=400, legend=False))
+    st.caption(
+        "**이것은 인과효과가 아닙니다.** 예측모델 안에서 Event 변수를 추가했을 때 "
+        "예측값이 얼마나 달라졌는지를 보여줄 뿐입니다.")
+
+    with st.expander("공식 사건 목록 (전부 공식 출처)"):
+        eps, trs = D["episodes"], D["transitions"]
+        cats = st.multiselect("분류", sorted(eps["category_label"].unique()),
+                              default=sorted(eps["category_label"].unique()),
+                              key="ev_cats")
+        for _, e in eps[eps["category_label"].isin(cats)].iterrows():
+            mine = trs[trs["episode_id"] == e["episode_id"]].sort_values(
+                "known_at_date")
+            with st.expander(f"{e['episode_name']}  ·  {e['category_label']}  ·  "
+                             f"상태 변화 {len(mine)}건"):
+                st.markdown(f"**경제적 경로** — {e['economic_channel']}")
+                for _, t in mine.iterrows():
+                    st.markdown(
+                        f"- `{t['known_at_date']}` **{t['stage']}**  \n"
+                        f"  {t['short_summary']}  \n"
+                        f"  [{t['official_source_name']}]"
+                        f"({t['official_source_url']})")
 
     with st.expander("채점 규칙 — 결과를 보기 전에 고정했습니다"):
         st.markdown(meta["event_method_v3_md"])
 
 # ===========================================================================
-# 6. Event 보정 진단 (§28 · §22 · §23 · §29)
+# 4. AGENT TEAM  (§PART N)
 # ===========================================================================
-with tabs[6]:
-    st.subheader("Event 정보가 기본 예측을 얼마나 수정했나")
-    st.markdown(meta["v4_architecture_md"])
-
-    at = v4["attribution"]
-    a = st.columns(5)
-    a[0].metric("median 보정폭", f"{at['median_abs_event_correction']:.1f}",
-                help="지수 Point. 0 에 가까울수록 Event 가 예측을 안 움직인 것.")
-    a[1].metric("max 보정폭", f"{at['max_abs_event_correction']:.1f}")
-    a[2].metric("|보정| < 1 인 시점", f"{at['pct_abs_lt_1']:.0f}%")
-    a[3].metric("|보정| > 5 인 시점", f"{at['pct_abs_gt_5']:.0f}%")
-    a[4].metric("방향이 맞은 비율",
-                f"{at['sign_agreement_with_actual_residual_pct']:.0f}%",
-                help="보정 방향이 실제 잔차 방향과 일치한 비율. 50% = 동전 던지기.")
-
-    d = D["v4_attr"].copy()
-    d["month"] = pd.to_datetime(d["target_month"] + "-01")
-    fig = go.Figure()
-    fig.add_bar(x=d["month"], y=d["event_correction"],
-                marker_color=[UP_COLOR if v > 0 else DOWN_COLOR
-                              for v in d["event_correction"]],
-                name="Event 보정폭", showlegend=False,
-                hovertemplate="%{x|%Y-%m}<br>보정 %{y:+.1f} 지수 Point<extra></extra>")
-    fig.add_hline(y=0, line=dict(color="#6B7280", width=1.2))
-    imx = d["event_correction"].abs().idxmax()
-    fig.add_annotation(
-        x=d.loc[imx, "month"], y=d.loc[imx, "event_correction"],
-        text=f"최대 보정 {d.loc[imx, 'event_correction']:+.0f}",
-        showarrow=True, arrowhead=0,
-        ay=-34 if d.loc[imx, "event_correction"] > 0 else 34, ax=0,
-        font=dict(size=11.5), bgcolor="rgba(255,255,255,0.85)")
-    show(finish(
-        fig,
-        question="Q. Event 정보가 실제 예측값을 움직였는가?",
-        title="Event 정보가 기본 예측을 얼마나 수정했는가  "
-              "<span style='font-size:13px;color:#6B7280'>"
-              "+ = Event 반영 후 더 높은 지수 예측 · − = 더 낮은 지수 예측</span>",
-        ylab="Event 보정폭 (지수 Point)", xlab="대상 월",
-        footnote=FOOT_EVENT + "  ·  단계 구조상 M2-R − M1-R 이 곧 Event 보정폭",
-        height=460, legend=False))
-    takeaway(meta["v4_event_takeaway_md"])
-
-    st.divider()
-    st.markdown("#### Event 보정 전 vs 후 (§22)")
-    b1, b2, b3 = st.columns(3)
-    b1.metric("보정 전 MAE (M1-R)", f"{at['mae_before_event_correction_M1R']:.2f}")
-    b2.metric("보정 후 MAE (M2-R)", f"{at['mae_after_event_correction_M2R']:.2f}",
-              delta=f"{at['mae_delta']:+.2f}", delta_color="inverse")
-    b3.metric("개선 / 악화 시점",
-              f"{at['n_origins_improved']} / {at['n_origins_worsened']}")
-
-    st.markdown(f"#### Event 활발한 시기 vs 조용한 시기 (§23)")
-    ea, eq = at["event_active"], at["event_quiet"]
-    fig = go.Figure()
-    xs, ys1, ys2 = [], [], []
-    for name, g in (("Event 활발한 달", ea), ("조용한 달", eq)):
-        if g["n"]:
-            xs.append(f"{name}  (n={g['n']})")
-            ys1.append(g["m1r_mae"])
-            ys2.append(g["m2r_mae"])
-    fig.add_bar(x=xs, y=ys1, name=LABEL["M1R"], marker_color=COLORS["M1R"],
-                text=[f"{v:.1f}" for v in ys1], textposition="outside")
-    fig.add_bar(x=xs, y=ys2, name=LABEL["M2R"], marker_color=COLORS["M2R"],
-                text=[f"{v:.1f}" for v in ys2], textposition="outside")
-    fig.update_layout(barmode="group")
-    show(finish(
-        fig,
-        question="Q. Event 가 강한 시기에 Event 모델이 더 유용했는가?",
-        title="Event 활발한 시기 vs 조용한 시기의 예측 정확도  "
-              "<span style='font-size:13px;color:#6B7280'>MAE ↓ 낮을수록 정확</span>",
-        ylab="평균 예측오차 MAE (지수 Point)", xlab="",
-        footnote=f"Event-active 기준: max(PEP, NEP) ≥ "
-                 f"{at['event_active_threshold']} — 결과를 보기 **전에** 동결한 "
-                 f"임계값. 서술적 비교이며 유의성을 주장하지 않음.",
-        height=440))
-    takeaway(meta["v4_regime_takeaway_md"])
-
-    st.divider()
-    st.markdown("#### 어떤 Event 표현과 모델이 선택됐나 (§40 · §41)")
-    sel = D["v4_selected"]
-    a, b = st.columns(2)
-    with a:
-        cnt = sel["event_feature_family"].value_counts().reindex(
-            ["E0", "E1", "E2"]).fillna(0).astype(int)
-        fig = go.Figure(go.Bar(
-            x=["E0 · 현재 압력 수준", "E1 · 수준 + 변화", "E2 · 수준 + 1개월 전"],
-            y=cnt.values, marker_color=["#94A3B8", "#0D9488", "#7C3AED"],
-            text=cnt.values, textposition="outside", showlegend=False))
-        show(finish(fig, title="가장 자주 선택된 Event 표현",
-                    ylab="선택된 예측 시점 수", xlab="", height=380, legend=False,
-                    footnote="학습 데이터 내부 CV 로만 선택 · 최종 Test 미사용"))
-    with b:
-        cnt2 = sel["event_model"].value_counts()
-        fig = go.Figure(go.Bar(
-            x=[{"ols": "OLS (규제 없음)", "ridge": "Ridge (규제)",
-                "huber": "Huber (이상치 강건)"}.get(i, i) for i in cnt2.index],
-            y=cnt2.values, marker_color="#2563EB",
-            text=cnt2.values, textposition="outside", showlegend=False))
-        show(finish(fig, title="가장 자주 선택된 Event 보정 모델",
-                    ylab="선택된 예측 시점 수", xlab="", height=380, legend=False,
-                    footnote="학습 데이터 내부 CV 로만 선택 · 최종 Test 미사용"))
-
-    st.divider()
-    with st.expander("V3 에서는 왜 Event 효과를 분리할 수 없었나 (historical)"):
-        cdf = D["contrib"]
-        fig = go.Figure()
-        for stage in ("M2_V2", "M2_V3"):
-            g = cdf[cdf["stage"] == stage].copy()
-            g["month"] = pd.to_datetime(g["target_month"] + "-01")
-            fig.add_scatter(x=g["month"], y=g["direct_event_contribution"],
-                            name=LABEL[stage],
-                            line=dict(color=COLORS[stage], width=2))
-        show(finish(fig, title="V3 의 직접 Event 기여분 (계수 × 압력값)",
-                    ylab="직접 기여분 (지수 Point)", xlab="대상 월",
-                    footnote=FOOT_EVENT, height=380))
-        st.markdown(meta["contribution_reading_md"])
-
-# ===========================================================================
-# 7. 왜 이 모델인가 (§PART O · §29)
-# ===========================================================================
-with tabs[7]:
-    st.subheader("왜 Ridge 를 사용했나")
-    st.markdown(
-        "- 초기 학습 표본이 **72개월** 수준으로 작습니다.\n"
-        "- 그에 비해 feature 수가 상대적으로 많습니다 (M1 기준 **22개**).\n"
-        "- 시장 X 끼리 **상관이 높습니다** "
-        f"(관측된 최대 상관 **{meta['m1_diagnosis']['max_abs_corr_within_X']:.2f}**).\n"
-        "- 이 조건에서 규제 없는 OLS 는 계수가 불안정해집니다.\n"
-        "- **Ridge 는 계수를 안정화**시켜 표본이 작을 때 과적합을 줄입니다."
-    )
-
-    st.markdown("#### 왜 다른 모델도 비교하나")
-    st.markdown(
-        "| 모델 | 왜 후보에 넣었나 |\n|---|---|\n"
-        "| **ElasticNet** | 불필요한 변수 일부를 선택적으로 축소·제거할 수 있습니다 |\n"
-        "| **PLS** | 상관이 높은 시장 X 를 소수의 잠재 산업 요인으로 압축합니다 |\n"
-        "| **Bayesian Ridge** | 작은 표본에서 규제 강도를 안정적으로 추정하는 후보입니다 |\n"
-        "| **Event 층의 OLS** | Event 층은 예측변수가 2~4개뿐이므로 강한 축소 없이 "
-        "추가 신호를 직접 검증할 수 있습니다 |\n"
-        "| **Huber** | 소수의 극단 시점에 계수가 끌려가지 않게 합니다 |"
-    )
-    st.info(
-        "**어느 방법도 보편적으로 최고라고 말하지 않습니다.** 각 예측 시점마다 "
-        "**그 시점의 과거 학습 데이터 안에서만** 후보를 비교해 선택했고, "
-        "최종 Test 성능은 선택에 사용하지 않았습니다."
-    )
-
-    st.divider()
-    st.markdown("#### 실제로 무엇이 선택됐나")
-    sel = D["v4_selected"]
-    cnt = sel["market_family"].value_counts()
-    name_map = {"ridge": "Ridge", "elasticnet": "ElasticNet", "pls": "PLS",
-                "bayesian_ridge": "Bayesian Ridge"}
-    fig = go.Figure(go.Bar(
-        x=[name_map.get(i, i) for i in cnt.index], y=cnt.values,
-        marker_color="#059669", text=cnt.values, textposition="outside",
-        showlegend=False))
-    show(finish(
-        fig, question="Q. 시장정보 보정에는 어떤 모델이 뽑혔는가?",
-        title="시장정보 보정 층에서 선택된 모델 분포",
-        ylab="선택된 예측 시점 수", xlab="",
-        footnote="학습 데이터 내부 시간순 CV 로만 선택 · 최종 Test 미사용",
-        height=400, legend=False))
-    takeaway(
-        f"{len(sel)}개 예측 시점에서 "
-        + " · ".join(f"<b>{name_map.get(i, i)}</b> {v}회"
-                     for i, v in cnt.items())
-        + " 선택됐습니다. 상관이 높은 시장 X 를 소수 요인으로 압축하는 PLS 가 "
-          f"{int(cnt.get('pls', 0))}회 뽑힌 것은, 12개 변수가 실제로 겹친다는 "
-          "학습 데이터상의 신호입니다.")
-
-    st.divider()
-    st.markdown("#### 왜 시장 정보를 더해도 좋아지지 않았나 (실행 전 진단)")
-    md = meta["m1_diagnosis"]
-    a = st.columns(4)
-    a[0].metric("학습행 / feature (최소)", f"{md['rows_per_feature_min']:.2f}")
-    a[1].metric("시장 X 계수 수축률", f"{md['shrinkage_market']:.2f}",
-                help="1.0 이면 전혀 안 눌린 것, 0 에 가까울수록 강하게 눌린 것.")
-    a[2].metric("과거이력 계수 수축률", f"{md['shrinkage_hist']:.2f}")
-    a[3].metric("X 를 과거이력으로 설명한 R² (최대)",
-                f"{md['max_R2_X_on_hist']:.2f}")
-    st.markdown(meta["m1_diagnosis_md"])
-
-# ===========================================================================
-# 8. M2 진화 (§PART S)
-# ===========================================================================
-with tabs[8]:
-    st.subheader("Event 모델(M2)은 이렇게 진화했습니다")
-    ev = meta["m2_evolution"]
-    fig = go.Figure()
-    fig.add_bar(x=[e["label"] for e in ev], y=[e["mae"] for e in ev],
-                marker_color=["#9CA3AF", "#D97706", "#BE185D", "#DB2777"],
-                text=[f"{e['mae']:.1f}" for e in ev], textposition="outside",
-                showlegend=False)
-    fig.add_hline(y=m("VIEW_A_OFFICIAL", "M0"), line=dict(
-        color="#2563EB", width=1.6, dash="dash"))
-    fig.add_annotation(xref="paper", x=0.01, y=m("VIEW_A_OFFICIAL", "M0"),
-                       text=f"공식 M0 기준선 {m('VIEW_A_OFFICIAL', 'M0'):.1f}",
-                       showarrow=False, yshift=12, xanchor="left",
-                       font=dict(size=11.5, color="#2563EB"))
-    show(finish(
-        fig, question="Q. Event 모델은 단계마다 무엇을 고쳤고 무엇이 남았는가?",
-        title="M2 진화 — 매 단계 진단 후 재설계  "
-              "<span style='font-size:13px;color:#6B7280'>MAE ↓ 낮을수록 정확</span>",
-        ylab="평균 예측오차 MAE (지수 Point)", xlab="",
-        footnote=FOOT_TARGET, height=440, legend=False))
-    takeaway(
-        "네 단계 모두 <b>공식 M0 기준선을 넘지 못했습니다.</b> "
-        "그러나 V4 에서 처음으로 <b>Event 효과와 규제 재선택 효과가 분리</b>되어, "
-        "V3 에서 관측된 악화의 대부분이 Event 정보가 아니었음을 보일 수 있게 "
-        "됐습니다.")
-
-    for e in ev:
-        with st.expander(f"**{e['label']}** — MAE {e['mae']:.2f} · {e['headline']}"):
-            st.markdown(f"**무엇이 문제였나** — {e['problem']}")
-            st.markdown(f"**Agent 진단이 찾은 것** — {e['diagnosis']}")
-            st.markdown(f"**다음 단계에서 무엇을 바꿨나** — {e['next_change']}")
-
-# ===========================================================================
-# 9. Clean-PIT
-# ===========================================================================
-with tabs[9]:
-    st.subheader("왜 Clean-PIT 인가")
-    a, b = st.columns(2)
-    with a:
-        st.markdown("#### ⚠️ 기존 방식의 위험")
-        st.markdown(
-            "과거를 모델링할 때 **현재 최종 수정된 과거 데이터**를 쓰면, "
-            "그 시점에는 알 수 없었던 정보가 모델에 들어갑니다.\n\n"
-            "경제지표는 최초 발표 후 여러 차례 개정됩니다.")
-    with b:
-        st.markdown("#### ✅ 본 프로젝트의 방식")
-        st.markdown(
-            f"**2023년 시점을 예측할 때 2026년에 수정된 최종 {tgt['series_id']} 값을 "
-            "쓰는 것이 아니라, 당시 실제로 공개되어 있던 값만 사용합니다.**\n\n"
-            "BLS · Federal Reserve 의 당시 historical release 를 직접 재구성했습니다.")
-    st.divider()
-    st.markdown("#### 실제로 개정이 일어난다는 증거")
-    st.dataframe(pd.DataFrame(meta["revision_examples"]), hide_index=True,
-                 width="stretch")
-    st.divider()
-    st.markdown("#### 사건 정보에도 같은 규칙을 적용했습니다")
-    st.markdown(
-        f"각 사건은 **인용한 공식 문서가 공개된 날짜**로 기록됩니다. 대상 월 `m` 의 "
-        f"예측에는 `m` 이 시작되기 **전**에 알려진 것만 씁니다. "
-        f"평가 구간 종료일(`{v3['backtest_last_origin']}`) 이후에 처음 알려진 정보는 "
-        f"레지스트리 로더가 **거부**합니다.")
-    st.divider()
-    st.markdown("#### V4 가 추가로 지킨 규칙 — Prequential 잔차")
-    st.markdown(meta["v4_prequential_md"])
-
-# ===========================================================================
-# 10. Agent Team (§PART R)
-# ===========================================================================
-with tabs[10]:
+with tabs[3]:
     st.subheader("Claude Code Agent Team 구성")
     st.markdown(
         "**한 모델에게 모든 업무를 한 번에 시킨 것이 아니라, 프로젝트를 역할별로 "
-        "분해하고 전문 Agent 가 각 업무를 수행하도록 구성했습니다.**"
-    )
+        "분해하고 전문 Agent 가 각 업무를 수행하도록 구성했습니다.**")
     p = ASSETS / "agent_team.png"
     if p.exists():
         st.image(str(p), width="stretch")
@@ -868,26 +628,204 @@ with tabs[10]:
                     f"</span><br><br>"
                     f"<b style='font-size:12px;color:#6B7280'>REPRESENTATIVE OUTPUTS</b>"
                     f"<br><span style='font-size:12.5px;color:#374151'>"
-                    + "<br>".join(f"· <code>{o}</code>" for o in ag["outputs"]) +
+                    + "<br>".join(f"· {o}" for o in ag["outputs"]) +
                     "</span></div>", unsafe_allow_html=True)
         st.write("")
 
     st.divider()
     st.markdown("#### 공유 규칙(Skill)로 원칙을 강제했습니다")
     st.dataframe(pd.DataFrame(team["skills"]), hide_index=True, width="stretch")
-
-    st.divider()
     st.markdown("#### 작업 흐름")
-    st.markdown(
-        " → ".join(f"**{s}**" for s in team["workflow"])
-    )
+    st.markdown(" → ".join(f"**{s}**" for s in team["workflow"]))
     st.markdown(meta["claude_code_md"])
+
+# ===========================================================================
+# 5. RESEARCH ARCHIVE  (§PART J)
+# ===========================================================================
+with tabs[4]:
+    st.subheader("연구 과정 (Research Archive)")
+    st.info(
+        "**모든 실험 결과가 그대로 보존되어 있습니다.** 기본 화면에는 최종 세 모델만 "
+        "보여주고, 중간 실험은 여기에 접어 두었습니다 — 지운 것이 아닙니다.")
+
+    section = st.selectbox(
+        "보고 싶은 항목", [
+            "A. 공식 사전등록 실험 (N0 / M0 / M1)",
+            "B. Event 연구 발전 과정 (V1 → V5)",
+            "C. V5 통제 실험 (2×2)",
+            "D. 진단 결과",
+            "E. 전체 Metrics Table",
+            "F. 방법론 · 산출물",
+        ])
+
+    if section.startswith("A"):
+        st.markdown("결과를 보기 **전에** 규칙을 고정한 실험의 원본 결과입니다. "
+                    "이후 어떤 Demo 도 이 결과를 대체하지 않습니다.")
+        om = D["official_metrics"]
+        st.dataframe(
+            om[om["target_id"] == tgt["series_id"]][
+                ["model", "n_origins", "mae", "rmse", "status"]]
+            .rename(columns={"model": "모델", "n_origins": "시점 수",
+                             "mae": "MAE", "rmse": "RMSE", "status": "지위"})
+            .style.format({"MAE": "{:.2f}", "RMSE": "{:.2f}"}),
+            hide_index=True, width="stretch")
+        pi = meta["primary_inference"]
+        st.markdown(
+            f"사전등록된 주요 가설(M0 vs M1): 상대 개선 **{pi['skill']:+.1%}**, "
+            f"DM 검정 p = **{pi['dm_p']:.3f}** — 개선 증거 없음.")
+
+    elif section.startswith("B"):
+        ev = meta["m2_evolution"]
+        fig = go.Figure()
+        fig.add_bar(x=[e["label"] for e in ev], y=[e["mae"] for e in ev],
+                    marker_color=["#9CA3AF", "#D97706", "#BE185D", "#7C3AED",
+                                  "#DB2777"][:len(ev)],
+                    text=[f"{e['mae']:.1f}" for e in ev],
+                    textposition="outside", showlegend=False)
+        fig.add_hline(y=OPS["M0"], line=dict(color="#2563EB", width=1.6,
+                                             dash="dash"))
+        fig.add_annotation(xref="paper", x=0.01, y=OPS["M0"], xanchor="left",
+                           text=f"과거 PPI 기반 기준선 {OPS['M0']:.1f}",
+                           showarrow=False, yshift=12,
+                           font=dict(size=11.5, color="#2563EB"))
+        show(finish(
+            fig, question="Q. Event 모델은 단계마다 무엇을 고쳤는가?",
+            title="Event 모델(M2) 재설계 이력  "
+                  "<span style='font-size:13px;color:#6B7280'>MAE ↓ 낮을수록 정확</span>",
+            ylab="평균 예측오차 MAE (지수 Point)", xlab="",
+            footnote=FOOT_TARGET, height=420, legend=False))
+        for e in ev:
+            with st.expander(f"**{e['label']}** — MAE {e['mae']:.2f} · "
+                             f"{e['headline']}"):
+                st.markdown(f"**무엇이 문제였나** — {e['problem']}")
+                st.markdown(f"**Agent 진단이 찾은 것** — {e['diagnosis']}")
+                st.markdown(f"**다음 단계에서 무엇을 바꿨나** — {e['next_change']}")
+
+    elif section.startswith("C"):
+        st.markdown(
+            "**통제 실험**은 네 칸 모두에 같은 모형 계열을 쓰고 잡음 방어 장치를 "
+            "끕니다. 정보가 늘었을 때의 순수한 효과를 보기 위한 것입니다.")
+        grid = [[CTRL["M0"], CTRL["ME"]], [CTRL["M1"], CTRL["M2"]]]
+        names = [["M0", "ME"], ["M1", "M2"]]
+        fig = go.Figure(go.Heatmap(
+            z=grid, x=["Event 없음", "Event 있음"], y=["시장 없음", "시장 있음"],
+            colorscale="RdYlGn_r", colorbar=dict(title="MAE"),
+            hovertemplate="%{y} / %{x}<br>MAE %{z:.2f}<extra></extra>"))
+        for i in range(2):
+            for j in range(2):
+                fig.add_annotation(
+                    x=["Event 없음", "Event 있음"][j],
+                    y=["시장 없음", "시장 있음"][i],
+                    text=f"<b>{names[i][j]}</b><br>{grid[i][j]:.2f}",
+                    showarrow=False, font=dict(size=15, color="#111827"))
+        show(finish(
+            fig, question="Q. 아키텍처를 고정하면 정보 증분은 얼마인가?",
+            title="V5 통제 실험 2×2  "
+                  "<span style='font-size:13px;color:#6B7280'>MAE ↓ 낮을수록 정확</span>",
+            ylab="", xlab="", footnote=FOOT_TARGET, height=380, legend=False))
+        st.markdown(meta["v5_market_md"])
+        st.dataframe(
+            pd.DataFrame([
+                {"비교": f"{b} → {t}", "skill": f"{v['skill']:+.2%}",
+                 "DM p": f"{v['dm_p']:.3f}", "MBB p": f"{v['mbb_p']:.3f}"}
+                for (bt, v) in v5["significance"].items()
+                for b, t in [bt.split("->")]]),
+            hide_index=True, width="stretch")
+
+    elif section.startswith("D"):
+        st.markdown("#### M1 이 왜 약했나 (V4 진단)")
+        md = meta["m1_diagnosis"]
+        a = st.columns(4)
+        a[0].metric("학습행 / feature (최소)", f"{md['rows_per_feature_min']:.2f}")
+        a[1].metric("시장 X 계수 수축률", f"{md['shrinkage_market']:.2f}")
+        a[2].metric("과거이력 계수 수축률", f"{md['shrinkage_hist']:.2f}")
+        a[3].metric("X 를 과거이력으로 설명한 R² (최대)",
+                    f"{md['max_R2_X_on_hist']:.2f}")
+        st.markdown(meta["m1_diagnosis_md"])
+
+        st.divider()
+        st.markdown("#### 모델 선택 자체의 과적합 위험 (V5 합성 실험)")
+        st.markdown(meta["v5_limitation_md"])
+        nc = v5["null_calibration"]
+        st.dataframe(pd.DataFrame([
+            {"층": "시장", "중앙값": f"{nc['market']['median']:.2f}%",
+             "p90": f"{nc['market']['p90']:.2f}%",
+             "최대": f"{nc['market']['max']:.2f}%"},
+            {"층": "Event", "중앙값": f"{nc['event']['median']:.2f}%",
+             "p90": f"{nc['event']['p90']:.2f}%",
+             "최대": f"{nc['event']['max']:.2f}%"}]),
+            hide_index=True, width="stretch")
+        st.caption(
+            "예측 대상과 **아무 관계가 없는 난수**를 넣었을 때 내부 검증 오차가 "
+            "얼마나 '개선'되는지를 잰 것입니다. 이 값보다 큰 개선을 요구하는 "
+            f"문턱({v5['selection_margin']:.0%})을 두어 잡음 채택을 막았습니다.")
+
+        st.divider()
+        st.markdown("#### V5 가 고른 것들")
+        sel = D["v5_sel"]
+        a, b = st.columns(2)
+        with a:
+            cnt = sel["market_label"].value_counts()
+            fig = go.Figure(go.Bar(x=cnt.index.tolist(), y=cnt.values,
+                                   marker_color="#0D9488", text=cnt.values,
+                                   textposition="outside", showlegend=False))
+            show(finish(fig, title="시장 모델 선택 분포",
+                        ylab="선택된 예측 시점 수", xlab="", height=380,
+                        legend=False,
+                        footnote="학습 데이터 내부 CV 로만 선택 · 최종 Test 미사용"))
+        with b:
+            cnt2 = sel["m2_family"].value_counts()
+            fig = go.Figure(go.Bar(x=cnt2.index.tolist(), y=cnt2.values,
+                                   marker_color="#DB2777", text=cnt2.values,
+                                   textposition="outside", showlegend=False))
+            show(finish(fig, title="Event 표현 선택 분포",
+                        ylab="선택된 예측 시점 수", xlab="", height=380,
+                        legend=False,
+                        footnote="NO_EVENT = 모델이 Event 를 쓰지 않기로 선택"))
+
+    elif section.startswith("E"):
+        st.markdown("모든 실험의 전체 지표입니다. **하나도 삭제되지 않았습니다.**")
+        vm = D["v5_metrics"].copy()
+        vm["모델"] = vm["model"].map(lambda m: LABEL.get(m, m))
+        vm["지위"] = vm["status"].map(
+            {"OFFICIAL_PREREGISTERED": "공식 사전등록", "EXPLORATORY": "탐색적 확장"})
+        st.dataframe(
+            vm[["view", "모델", "mae", "rmse", "smape",
+                "directional_accuracy", "지위"]]
+            .rename(columns={"view": "그룹", "mae": "MAE ↓", "rmse": "RMSE ↓",
+                             "smape": "sMAPE ↓", "directional_accuracy": "방향 정확도 ↑"})
+            .style.format({"MAE ↓": "{:.2f}", "RMSE ↓": "{:.2f}",
+                           "sMAPE ↓": "{:.3f}", "방향 정확도 ↑": "{:.2f}"}),
+            hide_index=True, width="stretch")
+        st.download_button(
+            "전체 지표 CSV 내려받기",
+            D["v5_metrics"].to_csv(index=False).encode("utf-8-sig"),
+            "steel_scrap_all_metrics.csv", "text/csv")
+
+    else:
+        st.markdown(
+            f"- V5 방법론 동결본: `{v5['freeze_version']}` "
+            "(예측 결과를 보기 **전에** 커밋)\n"
+            f"- 새 외부 데이터 추가: **{'예' if v5['new_raw_x_added'] else '아니오'}**\n"
+            f"- 공식 사건 기록 변경: "
+            f"**{'예' if v5['event_registry_changed'] else '아니오'}**\n"
+            f"- Event 신뢰도 문턱: **{v5['selection_margin']:.0%}** "
+            "(난수 실험으로 보정)\n"
+            f"- 자동 테스트: **{k['n_tests']}개**")
+        st.markdown("#### 동봉 문서")
+        for label, path in (("경영진 요약", "docs/executive_summary.md"),
+                            ("방법론 요약", "docs/methodology_summary.md"),
+                            ("V5 결과와 해석", "docs/findings_v5.md"),
+                            ("V4 결과와 해석", "docs/findings_v4.md"),
+                            ("V3 결과와 해석", "docs/findings_v3.md"),
+                            ("사건 압력 방법론 V3", "docs/event_method_v3.md"),
+                            ("배포 보안 감사", "docs/DEPLOYMENT_AUDIT.md")):
+            st.markdown(f"- [{label}]({path})")
 
 st.divider()
 st.caption(
     f"공식 실행 커밋 `{meta['git_commit'][:12]}` · "
     f"사전등록 해시 `{meta['preregistration_sha256'][:12]}` · "
-    f"동결 데이터 해시 `{meta['freeze_manifest_sha256'][:12]}` · "
-    f"V3 registry `{v3['registry_version']}` / rubric `{v3['rubric_version']}` · "
-    f"V4 동결 `{v4['freeze_version']}` · 생성 {meta['exported_at']}"
+    f"V3 registry `{v3['registry_version']}` · "
+    f"V5 동결 `{v5['freeze_version']}` · 생성 {meta['exported_at']}"
 )
