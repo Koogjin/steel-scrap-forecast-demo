@@ -109,6 +109,8 @@ k = meta["kpi"]
 v3 = meta["demo_v3"]
 v5 = meta["demo_v5"]
 v6 = meta["demo_v6"]
+#: §31 — 상태 라벨의 단일 출처. export 단계에서 지표 방향을 적용해 만든 값이다.
+EXEC_V = v6["exec_verdicts"]
 OPS = v5["operational"]
 CTRL = v5["controlled"]
 
@@ -200,7 +202,7 @@ tabs = st.tabs([
 # ===========================================================================
 with tabs[0]:
     d_m1 = 100.0 * (OPS["M1_star"] / OPS["M0"] - 1.0)
-    d_m2 = 100.0 * (OPS["M2_star"] / OPS["M0"] - 1.0)
+    d_m2 = 100.0 * (OPS["M2_star"] / OPS["M0"] - 1.0)   # KPI delta 표시용
 
     c = st.columns(4)
     c[0].metric("과거 PPI 기반 (M0)", f"{OPS['M0']:.2f}", help="MAE ↓ 낮을수록 정확")
@@ -241,13 +243,17 @@ with tabs[0]:
               "<span style='font-size:13px;color:#6B7280'>MAE ↓ 낮을수록 정확</span>",
         ylab="평균 예측오차 MAE (지수 Point)", xlab="",
         footnote=FOOT_TARGET, height=470, legend=False))
+    # 상태 라벨은 **손으로 적지 않는다** — export 단계의 공통 판정기가 지표 방향을
+    # 적용해 넘겨 준 값을 그대로 렌더링한다.
+    ev1 = EXEC_V["M1_star_vs_M0"]
+    ev2 = EXEC_V["M2_star_vs_M0"]
     takeaway(
         f"<b>{LABEL[order[best]]}</b> 가 가장 낮은 평균오차 "
         f"({vals[best]:.2f})를 보였습니다. "
-        f"시장 정보는 M0 대비 <b>{abs(d_m1):.1f}% "
-        f"{'개선' if d_m1 < 0 else '악화'}</b>, "
-        f"Event 정보까지 더하면 <b>{abs(d_m2):.1f}% "
-        f"{'개선' if d_m2 < 0 else '악화'}</b> 입니다.")
+        f"시장 정보는 M0 대비 <b>{abs(ev1['relative_improvement_pct']):.1f}% "
+        f"{ev1['verdict']}</b>, Event 정보까지 더하면 "
+        f"<b>{abs(ev2['relative_improvement_pct']):.1f}% "
+        f"{ev2['verdict']}</b> 입니다.")
     reading_guide(
         "막대가 낮을수록 예측이 정확합니다. 점선은 '지난달 값을 그대로 쓰는' "
         "단순 기준선입니다.",
@@ -420,9 +426,10 @@ with tabs[2]:
     q[1].metric("중앙값 보정폭", f"{ev_m2['median_abs_impact']:.1f}",
                 help="지수 Point. 0 이면 예측이 전혀 안 움직였다는 뜻입니다")
     q[2].metric("공식 사건", f"{v3['n_episodes']}건 / {v3['n_transitions']}상태")
-    q[3].metric("V4 대비 개선",
-                f"{100 * (1 - OPS['M2_star'] / mae('HISTORICAL_DEMO', 'M2R')):+.0f}%",
-                help="V4 의 Event 모델(M2-R) 대비 MAE 개선")
+    _v4 = EXEC_V["M2_star_vs_V4_M2R"]
+    q[3].metric(f"V4 대비 {_v4['verdict']}",
+                f"{_v4['relative_improvement_pct']:+.0f}%",
+                help="V4 의 Event 모델(M2-R) 대비 MAE 변화 (MAE ↓ 낮을수록 정확)")
 
     # =======================================================================
     # §27/§28/§34 — Event 는 어디에서 가장 유용한가? (V6 예측역할 연구)
