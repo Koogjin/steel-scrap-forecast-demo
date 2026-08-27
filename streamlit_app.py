@@ -699,12 +699,16 @@ with tabs[2]:
     st.markdown("### Event Risk & Conditional Value")
     st.markdown(meta["v7_intro_md"])
 
+    def _pfmt(p: float) -> str:
+        """0.001 미만을 'p = 0.000' 으로 적으면 '정확히 0' 처럼 읽힌다."""
+        return "p < 0.001" if p < 0.001 else f"p = {p:.3f}"
+
     rcards = st.columns(4)
     for col, card in zip(rcards, v7["risk_cards"]):
         v = card["verdict"]
         p = card.get("p_value")
         pstr = (f"<br><span style='font-size:11.5px;color:#9CA3AF'>"
-                f"p = {p:.3f}</span>" if p is not None else "")
+                f"{_pfmt(p)}</span>" if p is not None else "")
         col.markdown(
             f"<div style='background:#F8FAFC;border:1px solid #E2E8F0;"
             f"border-left:5px solid {VCOLOR[v]};border-radius:8px;padding:14px;"
