@@ -1,0 +1,4 @@
+channel,label,n_signal_months,n_preceding_shock,precision,recall_contribution,direction_correct,mean_forecast_revision,mean_abs_forecast_revision,beneficial_revision_rate
+shock_A_TRADE_POLICY,철강·무역 정책,5,1,0.2,0.125,0.6,22.711068,22.711068,0.4
+shock_B_GEO_SUPPLY,지정학·공급,8,3,0.375,0.375,0.5,18.394239,22.446171,0.375
+shock_C_DEMAND_MACRO,수요·거시 충격,1,0,0.0,0.0,1.0,-101.577816,101.577816,0.0

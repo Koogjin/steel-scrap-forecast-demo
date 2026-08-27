@@ -99,6 +99,11 @@ def load():
         ("v8_cases", "demo_v8_shock_cases.csv"),
         ("v8_feas", "demo_v8_pit_feasibility.csv"),
         ("v8_core", "demo_v8_core_comparison.csv"),
+        ("v9_metrics", "demo_v9_metrics.csv"),
+        ("v9_cmp", "demo_v9_comparisons.csv"),
+        ("v9_pred", "demo_v9_predictions.csv"),
+        ("v9_weekly_month", "demo_v9_weekly_by_month.csv"),
+        ("v9_weekly_attr", "demo_v9_weekly_attribution.csv"),
         ("x_registry", "x_feature_registry.csv"),
         ("official_metrics", "metrics.csv"),
         ("v3_metrics", "demo_v3_metrics.csv"),
@@ -122,6 +127,7 @@ v5 = meta["demo_v5"]
 v6 = meta["demo_v6"]
 v7 = meta["demo_v7"]
 v8 = meta["demo_v8"]
+v9 = meta["demo_v9"]
 #: §31 — 상태 라벨의 단일 출처. export 단계에서 지표 방향을 적용해 만든 값이다.
 EXEC_V = v6["exec_verdicts"]
 OPS = v5["operational"]
@@ -1178,6 +1184,238 @@ with tabs[2]:
             "기술적 상세는 `연구 과정 (Research Archive)` 탭에 있습니다. "
             "**DS 후보로 기존 M1/M2 를 대체하지 않았습니다** — 나란히 놓고 볼 뿐입니다.")
 
+    # =======================================================================
+    # §38 — V9: 더 긴 과거 이력 · 주간 사건 · 전달 진단
+    #
+    # 새 최상위 탭을 만들지 않는다. Event Intelligence 안의 한 섹션이다.
+    # =======================================================================
+    st.divider()
+    st.markdown("### 모델 대신 데이터를 늘리면 어떻게 되는가? (V9)")
+    st.markdown(meta["v9_intro_md"])
+
+    s9 = st.columns(4)
+    _ts = v9["training_support"]
+    s9[0].metric("추가된 과거 이력",
+                 f"+{v9['panel']['WPU1012']['added']}개월",
+                 help="예측 대상 계열 기준. 2008-09 까지 거슬러 재구성했습니다")
+    s9[1].metric("학습 정보 (첫 예측시점)",
+                 f"{_ts['n_train_first_origin']['core_m0_only']}",
+                 delta=f"+{_ts['increase_pct_first_origin']:.0f}%",
+                 help=f"기존 {_ts['n_train_first_origin']['legacy_frozen']}행")
+    s9[2].metric("재구성 교차검증",
+                 f"{v9['cross_check']['mismatches']}건 불일치",
+                 help=f"{v9['cross_check']['matches']}건 일치 — 같은 문서를 두 방법으로 읽어 대조")
+    s9[3].metric("예측 대상 월", f"{v9['n_origins']}개 (동일)",
+                 help="V5/V6/V8 과 정확히 같습니다 — 새 검증창이 아닙니다")
+
+    st.info(
+        "**예측 대상 50개월은 그대로이고 늘어난 것은 학습 정보뿐입니다.** "
+        "그래서 이것은 새로운 검증창이 아니라 **같은 창에서 과거 정보만 늘린 "
+        "실험**입니다.")
+
+    v9_view = st.radio(
+        "어떤 관점을 볼까요?",
+        ["Long-History Validation", "Weekly Event Nowcast",
+         "Event Design Diagnostic", "Weekly Event Attribution"],
+        index=0, horizontal=True, key="v9_view")
+
+    L9 = {"M0": "과거 PPI 기반 (M0)", "M1_star": "시장·산업 정보 (M1*)",
+          "M2_star": "공식 Event 정보 (M2*)", "M2_Gate_v8": "V8 Event 게이트",
+          "V9_M0_LH": "과거 PPI 기반 · 장기", "V9_M1_LH": "시장 정보 · 장기",
+          "V9_M2_XE": "시장+Event 독립 · 장기", "V9_M2_LH": "Event 게이트 · 장기"}
+
+    # ================= Long-History Validation =========================
+    if v9_view == "Long-History Validation":
+        st.markdown("#### 같은 50개월, 더 많은 과거 정보")
+        st.markdown(meta["v9_headline_md"])
+        order = ["M0", "M1_star", "M2_Gate_v8", "V9_M0_LH", "V9_M1_LH",
+                 "V9_M2_LH"]
+        cmap = {"M0": "#9CA3AF", "M1_star": "#9CA3AF", "M2_Gate_v8": "#9CA3AF",
+                "V9_M0_LH": "#059669", "V9_M1_LH": "#0D9488",
+                "V9_M2_LH": "#DB2777"}
+        vals = [v9["mae"][m] for m in order]
+        fig = go.Figure()
+        fig.add_bar(x=[L9[m] for m in order], y=vals,
+                    marker_color=[cmap[m] for m in order],
+                    text=[f"{v:.2f}" for v in vals], textposition="outside",
+                    showlegend=False)
+        fig.add_hline(y=v9["mae"]["M0"], line=dict(color="#2563EB", width=1.4,
+                                                   dash="dash"))
+        fig.add_annotation(xref="paper", x=0.01, y=v9["mae"]["M0"],
+                           xanchor="left", showarrow=False, yshift=12,
+                           text=f"기존 기준선 {v9['mae']['M0']:.1f}",
+                           font=dict(size=11.5, color="#2563EB"))
+        show(finish(
+            fig, question="Q. 과거 정보를 늘리면 예측이 좋아지는가?",
+            title="더 많은 데이터가 더 나은 모델을 이겼다  "
+                  "<span style='font-size:13px;color:#6B7280'>"
+                  "MAE ↓ 낮을수록 정확 · 회색은 기존 동결 결과</span>",
+            ylab="평균 예측오차 MAE (지수 Point)", xlab="",
+            footnote=f"{FOOT_TARGET}  ·  같은 50개 예측시점", height=470,
+            legend=False))
+        takeaway(
+            f"과거 PPI 기반 모델이 <b>{v9['mae']['M0']:.2f} → "
+            f"{v9['mae']['V9_M0_LH']:.2f}</b> 로 좋아졌습니다 "
+            f"(<b>p = 0.045</b>). 알고리즘은 한 글자도 바뀌지 않았습니다 — "
+            "<b>더 많은 데이터가 만든 개선</b>입니다.")
+
+        st.markdown(meta["v9_support_md"])
+        st.divider()
+        st.markdown(meta["v9_negative_md"])
+        st.warning(meta["v9_asymmetry_md"])
+
+        with st.expander("전체 비교표"):
+            st.dataframe(pd.DataFrame([
+                {"질문": c["question"], "기준": L9.get(c["base"], c["base"]),
+                 "비교": L9.get(c["test"], c["test"]),
+                 "MAE": f"{c['mae_base']:.2f} → {c['mae_test']:.2f}",
+                 "상대": f"{c['rel']:+.2f}%",
+                 "p": ("—" if c["p_value"] is None else f"{c['p_value']:.3f}")}
+                for c in v9["comparisons"]]), hide_index=True, width="stretch")
+
+    # ================= Weekly Event Nowcast ============================
+    elif v9_view == "Weekly Event Nowcast":
+        st.markdown("#### 월 안에서 사건이 도착하면 예측이 좋아지는가")
+        st.markdown(meta["v9_weekly_md"])
+        wk = pd.DataFrame(v9["weekly"]["by_week"])
+        fig = go.Figure()
+        fig.add_bar(x=wk["week"], y=wk["mae"],
+                    marker_color=["#0D9488"] + ["#DC2626"] * 4,
+                    text=[f"{v:.1f}" for v in wk["mae"]],
+                    textposition="outside", showlegend=False)
+        show(finish(
+            fig, question="Q. 월 안에서 사건 정보가 도착하면 예측이 좋아지는가?",
+            title="사건 정보가 도착할수록 예측이 나빠졌다  "
+                  "<span style='font-size:13px;color:#6B7280'>"
+                  "MAE ↓ 낮을수록 정확 · 시장 정보는 월초에 고정</span>",
+            ylab="평균 예측오차 MAE (지수 Point)",
+            xlab="정보 절단 시점 (W0 월초 → W4 월말)",
+            footnote=f"{FOOT_TARGET}  ·  통계 단위는 대상월 — 250개 독립 관측이 아닙니다",
+            height=450, legend=False))
+        c = st.columns(4)
+        rq = v9["weekly"]["revision_quality"]
+        c[0].metric("유익한 수정", f"{rq['beneficial_revision_rate']:.0%}")
+        c[1].metric("유해한 수정", f"{rq['harmful_revision_rate']:.0%}")
+        c[2].metric("주간 구제", f"{rq['weekly_rescue_rate']:.1%}",
+                    help=f"월초 방향이 틀렸던 {rq['n_w0_wrong']}건 중")
+        c[3].metric("잘못된 뒤집기", f"{rq['false_weekly_override_rate']:.1%}",
+                    help=f"월초 방향이 맞았던 {rq['n_w0_right']}건 중")
+        takeaway(
+            "사건 정보로 예측을 고쳤을 때 <b>70%가 오히려 나빠졌습니다.</b> "
+            "방향 정확도도 0.620 에서 0.500 으로 단조 하락합니다.")
+        reading_guide(
+            "막대가 낮을수록 정확합니다. W0 은 월초 시점, W4 는 월말까지 사건을 "
+            "반영한 결과입니다.",
+            "왼쪽에서 오른쪽으로 갈수록 **나빠집니다.**",
+            "실제값은 **사후 채점용**이며 nowcast 시점에 알 수 있던 정보가 "
+            "아닙니다. 그리고 비자명한 수정이 10건뿐이라 표본이 작습니다.")
+
+    # ================= Event Design Diagnostic =========================
+    elif v9_view == "Event Design Diagnostic":
+        st.markdown("#### Event는 잘 잡고 있지만, 가격에 영향을 주는 Event를 "
+                    "정확히 가려내고 있는가?")
+        st.markdown(meta["v9_diagnostic_md"])
+        d9 = v9["diagnostic"]["detection"]
+        t9 = v9["diagnostic"]["transmission"]
+        fig = go.Figure()
+        fig.add_bar(x=["탐지 (Recall)", "정밀도 (Precision)",
+                       "급변+신호에서 방향"],
+                    y=[d9["recall"], d9["precision"],
+                       t9["direction_M2XE_caseA"]],
+                    marker_color=["#059669", "#F59E0B", "#DC2626"],
+                    text=[f"{d9['recall']:.2f}", f"{d9['precision']:.2f}",
+                          f"{t9['direction_M2XE_caseA']:.3f}"],
+                    textposition="outside", showlegend=False)
+        fig.add_hline(y=0.5, line=dict(color="#9CA3AF", width=1.4, dash="dash"))
+        fig.add_annotation(xref="paper", x=0.99, y=0.5, xanchor="right",
+                           text="동전 던지기 0.50", showarrow=False, yshift=11,
+                           font=dict(size=11, color="#6B7280"))
+        show(finish(
+            fig, question="Q. Event를 잘 잡는가, 아니면 가격으로 잘 옮기는가?",
+            title="탐지는 되는데 전달이 안 된다  "
+                  "<span style='font-size:13px;color:#6B7280'>"
+                  "↑ 높을수록 좋음</span>",
+            ylab="비율", xlab="",
+            footnote=f"급변 {d9['n_shock']}건 · 신호 {d9['n_signal']}개월  ·  "
+                     f"{FOOT_EVENT}",
+            height=450, legend=False, yrange=[0, 1.0]))
+        with st.expander("채널별 진단 (제거·재가중하지 않습니다)"):
+            ch = pd.DataFrame(v9["diagnostic"]["channels"])
+            st.dataframe(
+                ch[["label", "n_signal_months", "n_preceding_shock",
+                    "precision", "beneficial_revision_rate"]]
+                .rename(columns={"label": "채널", "n_signal_months": "신호월",
+                                 "n_preceding_shock": "급변 선행",
+                                 "precision": "정밀도",
+                                 "beneficial_revision_rate": "유익한 수정률"}),
+                hide_index=True, width="stretch")
+        with st.expander("전달 시차 진단 (최적 시차를 모델에 넣지 않습니다)"):
+            lg = pd.DataFrame(v9["diagnostic"]["lags"])
+            st.dataframe(
+                lg[["signal", "lag_months", "n_high", "shock_rate_when_high",
+                    "shock_rate_when_low"]]
+                .rename(columns={"signal": "신호", "lag_months": "시차(개월)",
+                                 "n_high": "상위 20% 월수",
+                                 "shock_rate_when_high": "그때 급변률",
+                                 "shock_rate_when_low": "나머지 급변률"}),
+                hide_index=True, width="stretch")
+
+    # ================= Weekly Event Attribution ========================
+    else:
+        st.markdown("#### 어떤 사건이 언제 도착해 예측을 얼마나 바꿨나")
+        wm = D["v9_weekly_month"].copy()
+        at = D["v9_weekly_attr"].copy()
+        has_ev = sorted(at.loc[at["n_new_events"] > 0, "target_month"].unique())
+        if not has_ev:
+            st.info("새 사건이 도착한 대상월이 없습니다.")
+        else:
+            tm = st.selectbox("대상월", has_ev, key="v9_attr_month")
+            row = wm[wm["target_month"] == tm].iloc[0]
+            sub = at[at["target_month"] == tm].sort_values("cut_date")
+            wks = ["W0", "W1", "W2", "W3", "W4"]
+            fig = go.Figure()
+            fig.add_scatter(x=wks, y=[float(row[w]) for w in wks],
+                            name="사건 반영 예측",
+                            line=dict(color="#DB2777", width=2.6),
+                            mode="lines+markers")
+            fig.add_hline(y=float(row["W0"]),
+                          line=dict(color="#0D9488", width=1.6, dash="dot"))
+            fig.add_annotation(xref="paper", x=0.01, y=float(row["W0"]),
+                               xanchor="left", showarrow=False, yshift=12,
+                               text=f"월초 고정 baseline {float(row['W0']):.1f}",
+                               font=dict(size=11.5, color="#0D9488"))
+            fig.add_hline(y=float(row["y_true"]),
+                          line=dict(color="#111827", width=1.6))
+            fig.add_annotation(xref="paper", x=0.99, y=float(row["y_true"]),
+                               xanchor="right", showarrow=False, yshift=12,
+                               text=f"실제 {float(row['y_true']):.1f} (사후 채점)",
+                               font=dict(size=11.5, color="#111827"))
+            show(finish(
+                fig, question="Q. 사건이 도착할 때 예측이 어디로 움직였는가?",
+                title=f"{tm} — 사건 도착에 따른 월간 예측 수정  "
+                      "<span style='font-size:13px;color:#6B7280'>"
+                      "시장 정보는 월초에 고정</span>",
+                ylab="철·강 스크랩 PPI 예측", xlab="정보 절단 시점",
+                footnote="실제값은 **사후 채점용**이며 nowcast 시점에 알 수 "
+                         f"없었습니다  ·  {FOOT_TARGET}",
+                height=440, legend=False))
+            st.dataframe(
+                sub[["week", "cut_date", "n_new_events", "pep_increment",
+                     "nep_increment", "channels"]]
+                .rename(columns={"week": "주", "cut_date": "정보 절단일",
+                                 "n_new_events": "새 사건 수",
+                                 "pep_increment": "상방 압력 증가",
+                                 "nep_increment": "하방 압력 증가",
+                                 "channels": "채널"}),
+                hide_index=True, width="stretch")
+            st.caption(
+                f"누적 사건 수정폭 **{float(row['cumulative_event_adjustment']):+.2f}** "
+                "지수 Point. 새 사건이 하나도 없는 주는 수정폭이 정확히 0 입니다 — "
+                "**사건만 예측을 움직이도록** 만들었기 때문입니다.")
+
+    st.divider()
+    st.error(meta["v9_promotion_md"])
+
 
     # ---- 1. PEP / NEP --------------------------------------------------
     st.divider()
@@ -1411,14 +1649,15 @@ with tabs[4]:
     section = st.selectbox(
         "보고 싶은 항목", [
             "A. 공식 사전등록 실험 (N0 / M0 / M1)",
-            "B. Event 연구 발전 과정 (V1 → V8)",
+            "B. Event 연구 발전 과정 (V1 → V9)",
             "C. V5 통제 실험 (2×2)",
             "D. 진단 결과",
             "E. V7 위험·조건부 가치 실험 (전체 비교)",
             "F. V8 독립 신호 · 충격 구제 (전체 비교)",
             "G. V8 데이터 확장 타당성",
-            "H. 전체 Metrics Table",
-            "I. 방법론 · 산출물",
+            "H. V9 장기 이력 · 주간 사건 (전체 비교)",
+            "I. 전체 Metrics Table",
+            "J. 방법론 · 산출물",
         ])
 
     if section.startswith("A"):
@@ -1717,6 +1956,55 @@ with tabs[4]:
                 hide_index=True, width="stretch")
 
     elif section.startswith("H"):
+        st.markdown(
+            "**V9 는 모델이 아니라 데이터를 바꿨습니다** — 예측 대상 50개월을 그대로 "
+            "두고 과거 학습정보만 늘렸습니다. 모든 모델과 비교를 하나도 빠짐없이 "
+            "싣습니다.")
+        st.dataframe(
+            D["v9_metrics"][["model", "n", "mae", "rmse", "mae_shock",
+                             "mae_normal", "direction_accuracy",
+                             "is_legacy_frozen"]]
+            .rename(columns={"model": "모델", "n": "시점 수", "mae": "MAE ↓",
+                             "rmse": "RMSE ↓", "mae_shock": "MAE 급변 ↓",
+                             "mae_normal": "MAE 평상 ↓",
+                             "direction_accuracy": "방향 ↑",
+                             "is_legacy_frozen": "동결본"})
+            .style.format({"MAE ↓": "{:.2f}", "RMSE ↓": "{:.2f}",
+                           "MAE 급변 ↓": "{:.2f}", "MAE 평상 ↓": "{:.2f}",
+                           "방향 ↑": "{:.3f}"}),
+            hide_index=True, width="stretch")
+
+        st.markdown("##### 사전 선언된 비교")
+        st.dataframe(
+            D["v9_cmp"][["question", "base", "test", "mae_base", "mae_test",
+                         "rel_improvement_pct", "p_value", "ci_low", "ci_high",
+                         "inference"]]
+            .rename(columns={"question": "질문", "base": "기준", "test": "비교",
+                             "mae_base": "MAE 기준", "mae_test": "MAE 비교",
+                             "rel_improvement_pct": "상대(%)", "p_value": "p",
+                             "ci_low": "CI 하한", "ci_high": "CI 상한",
+                             "inference": "추론"}),
+            hide_index=True, width="stretch")
+        st.caption(
+            "**p 와 신뢰구간은 서로 다른 절차입니다.** p 는 재표본 평균분포를 "
+            "관측평균에 중심화한 귀무분포에서 나오고, 구간은 중심화하지 않은 "
+            "백분위 구간이라 검정의 역산이 아닙니다. 분포가 비대칭이면 둘이 "
+            "어긋날 수 있고, 그때는 **보수적인 쪽(검정)을 따릅니다.**")
+
+        st.markdown("##### 주간 사건 nowcast")
+        st.dataframe(
+            pd.DataFrame(v9["weekly"]["by_week"])
+            .rename(columns={"week": "주", "mae": "MAE ↓", "rmse": "RMSE ↓",
+                             "direction_accuracy": "방향 ↑",
+                             "median_abs_revision": "median |수정|",
+                             "n_nontrivial_revisions": "비자명 수정"}),
+            hide_index=True, width="stretch")
+        st.download_button(
+            "V9 시점별 원자료 CSV 내려받기",
+            D["v9_pred"].to_csv(index=False).encode("utf-8-sig"),
+            "steel_scrap_v9_by_origin.csv", "text/csv")
+
+    elif section.startswith("I"):
         st.markdown("모든 실험의 전체 지표입니다. **하나도 삭제되지 않았습니다.**")
         vm = D["v5_metrics"].copy()
         vm["모델"] = vm["model"].map(lambda m: LABEL.get(m, m))
@@ -1756,6 +2044,16 @@ with tabs[4]:
             f"**{'예' if v8['expanded_pit_data_used'] else '아니오'}**\n"
             f"- V8 주간 데이터 성능 사용: "
             f"**{'예' if v8['weekly_data_used'] else '아니오'}**\n"
+            f"- V9 방법론 동결본: `{v9['freeze_version']}` "
+            "(예측 결과를 보기 **전에** 커밋)\n"
+            f"- V9 예측 대상 월 변경: "
+            f"**{'아니오' if v9['test_window_unchanged'] else '예'}** "
+            "(V5/V6/V8 과 동일한 50개월)\n"
+            f"- V9 공식 사건 기록 확장: "
+            f"**{'예' if v9['event_history_expanded'] else '아니오'}**\n"
+            f"- V9 기본 화면 승격: "
+            f"**{'예' if v9['promotion']['promoted'] else '아니오'}** "
+            "(동결 규칙 조건 5 실패)\n"
             f"- 새 외부 데이터 추가: **{'예' if v5['new_raw_x_added'] else '아니오'}**\n"
             f"- 공식 사건 기록 변경: "
             f"**{'예' if v5['event_registry_changed'] else '아니오'}**\n"
@@ -1765,6 +2063,7 @@ with tabs[4]:
         st.markdown("#### 동봉 문서")
         for label, path in (("경영진 요약", "docs/executive_summary.md"),
                             ("방법론 요약", "docs/methodology_summary.md"),
+                            ("V9 결과와 해석", "docs/findings_v9.md"),
                             ("V8 결과와 해석", "docs/findings_v8.md"),
                             ("V8 데이터 확장 타당성", "docs/data_expansion_v8.md"),
                             ("V7 결과와 해석", "docs/findings_v7.md"),
@@ -1783,5 +2082,6 @@ st.caption(
     f"사전등록 해시 `{meta['preregistration_sha256'][:12]}` · "
     f"V3 registry `{v3['registry_version']}` · "
     f"V5 동결 `{v5['freeze_version']}` · V7 동결 `{v7['freeze_version']}` · "
-    f"V8 동결 `{v8['freeze_version']}` · 생성 {meta['exported_at']}"
+    f"V8 동결 `{v8['freeze_version']}` · V9 동결 `{v9['freeze_version']}` · "
+    f"생성 {meta['exported_at']}"
 )

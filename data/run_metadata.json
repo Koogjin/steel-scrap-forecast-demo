@@ -1,6 +1,6 @@
 {
   "exported_at": "2026-08-27",
-  "git_commit": "4b6ba480c27d8116ecba0149199d980466847cc8",
+  "git_commit": "a84c54760384df0c3f05737f19faaa7d04a0571b",
   "preregistration_sha256": "86d9e7dcd0591757360813c1e4e1ef4d4fb7c752fc2078346f21ceeb5da04852",
   "freeze_manifest_sha256": "ca5bb8212b44fc7b7da71ff051c1239f95d541c141379280e97374973f926fc2",
   "target": {
@@ -17,7 +17,7 @@
     "n_derived_features": 12,
     "n_origins": 50,
     "n_event_records": 49,
-    "n_tests": 1142,
+    "n_tests": 1273,
     "fred_dependency": 0
   },
   "common_support": {
@@ -1757,6 +1757,536 @@
       ]
     }
   },
+  "demo_v9": {
+    "freeze_version": "V9A-2026-08-27",
+    "research_status": "SAME_WINDOW_EXTENDED_HISTORY_EVALUATION",
+    "is_new_untouched_holdout": false,
+    "test_window_unchanged": true,
+    "n_origins": 50,
+    "event_history_expanded": false,
+    "m2_received_same_support_increase": false,
+    "training_support": {
+      "n_train_first_origin": {
+        "legacy_frozen": 72,
+        "core_legacy_v9": 83,
+        "core_long": 126,
+        "core_m0_only": 126
+      },
+      "n_train_last_origin": {
+        "core_long": 174,
+        "core_m0_only": 174
+      },
+      "first_train_month": "2009-12",
+      "increase_pct_first_origin": 75.0
+    },
+    "panel": {
+      "WPU1012": {
+        "first": "2008-09",
+        "last": "2026-01",
+        "months": 206,
+        "added": 69,
+        "gaps": 3
+      },
+      "WPU1017": {
+        "first": "2008-11",
+        "last": "2026-01",
+        "months": 205,
+        "added": 68,
+        "gaps": 2
+      },
+      "WPU0542": {
+        "first": "2008-09",
+        "last": "2026-01",
+        "months": 209,
+        "added": 72,
+        "gaps": 0
+      }
+    },
+    "cross_check": {
+      "matches": 30,
+      "mismatches": 0
+    },
+    "mae": {
+      "M0": 49.189718,
+      "M1_star": 48.825362,
+      "M2_star": 51.039376,
+      "M2_Gate_v8": 46.759875,
+      "V9_M0_LH": 45.570517,
+      "V9_M1_LH": 49.243258,
+      "V9_M2_XE": 51.609681,
+      "V9_M2_LH": 46.977392
+    },
+    "mae_shock": {
+      "M0": 121.545919,
+      "M1_star": 126.251515,
+      "M2_star": 126.251515,
+      "M2_Gate_v8": 124.59857,
+      "V9_M0_LH": 112.113975,
+      "V9_M1_LH": 123.557313,
+      "V9_M2_XE": 122.665692,
+      "V9_M2_LH": 121.79718
+    },
+    "direction": {
+      "M0": 0.54,
+      "M1_star": 0.6,
+      "M2_star": 0.56,
+      "M2_Gate_v8": 0.6,
+      "V9_M0_LH": 0.6,
+      "V9_M1_LH": 0.62,
+      "V9_M2_XE": 0.56,
+      "V9_M2_LH": 0.62
+    },
+    "comparisons": [
+      {
+        "question": "QUESTION_A_longer_target_history",
+        "base": "M0",
+        "test": "V9_M0_LH",
+        "mae_base": 49.189718,
+        "mae_test": 45.570517,
+        "rel": 7.3576,
+        "p_value": 0.04515,
+        "ci_low": 0.93666,
+        "ci_high": 7.987398
+      },
+      {
+        "question": "QUESTION_B_longer_market_history",
+        "base": "M1_star",
+        "test": "V9_M1_LH",
+        "mae_base": 48.825362,
+        "mae_test": 49.243258,
+        "rel": -0.8559,
+        "p_value": 0.8759,
+        "ci_low": -6.738915,
+        "ci_high": 4.004209
+      },
+      {
+        "question": "QUESTION_C_event_on_top_of_LH",
+        "base": "V9_M1_LH",
+        "test": "V9_M2_LH",
+        "mae_base": 49.243258,
+        "mae_test": 46.977392,
+        "rel": 4.6014,
+        "p_value": 0.13805,
+        "ci_low": 0.222321,
+        "ci_high": 5.725732
+      },
+      {
+        "question": "V8_gate_with_longer_support",
+        "base": "M2_Gate_v8",
+        "test": "V9_M2_LH",
+        "mae_base": 46.759875,
+        "mae_test": 46.977392,
+        "rel": -0.4652,
+        "p_value": 0.89955,
+        "ci_low": -4.199947,
+        "ci_high": 2.712163
+      },
+      {
+        "question": "LH_market_vs_history_baseline",
+        "base": "M0",
+        "test": "V9_M1_LH",
+        "mae_base": 49.189718,
+        "mae_test": 49.243258,
+        "rel": -0.1088,
+        "p_value": 0.97965,
+        "ci_low": -2.538275,
+        "ci_high": 4.010261
+      }
+    ],
+    "gate": {
+      "mean": 0.216134,
+      "median": 0.209574,
+      "pct_near_zero": 0.0,
+      "pct_gt_050": 0.0,
+      "pct_gt_075": 0.0,
+      "mean_case_A": 0.1883,
+      "n_case_A": 11,
+      "mean_case_B": null,
+      "n_case_B": 0,
+      "mean_case_C": null,
+      "n_case_C": 0,
+      "mean_case_D": 0.223985,
+      "n_case_D": 39,
+      "n_gate_open": 0,
+      "gate_is_effectively_constant": true,
+      "std": 0.031581
+    },
+    "weekly": {
+      "n_months": 50,
+      "n_week_cells": 200,
+      "n_cells_with_new_events": 19,
+      "n_months_with_new_events": 14,
+      "by_week": [
+        {
+          "week": "W0",
+          "n_months": 50,
+          "mae": 49.243258,
+          "rmse": 76.141679,
+          "direction_accuracy": 0.62,
+          "median_abs_revision": 0.0,
+          "mean_cumulative_event_adjustment": 0.0,
+          "n_nontrivial_revisions": 0
+        },
+        {
+          "week": "W1",
+          "n_months": 50,
+          "mae": 49.745606,
+          "rmse": 76.857999,
+          "direction_accuracy": 0.62,
+          "median_abs_revision": 0.0,
+          "mean_cumulative_event_adjustment": -1.119839,
+          "n_nontrivial_revisions": 2
+        },
+        {
+          "week": "W2",
+          "n_months": 50,
+          "mae": 60.800196,
+          "rmse": 88.315737,
+          "direction_accuracy": 0.54,
+          "median_abs_revision": 0.0,
+          "mean_cumulative_event_adjustment": 15.697528,
+          "n_nontrivial_revisions": 7
+        },
+        {
+          "week": "W3",
+          "n_months": 50,
+          "mae": 60.027887,
+          "rmse": 84.913562,
+          "direction_accuracy": 0.5,
+          "median_abs_revision": 0.0,
+          "mean_cumulative_event_adjustment": 18.471202,
+          "n_nontrivial_revisions": 10
+        },
+        {
+          "week": "W4",
+          "n_months": 50,
+          "mae": 57.127978,
+          "rmse": 83.92698,
+          "direction_accuracy": 0.5,
+          "median_abs_revision": 0.0,
+          "mean_cumulative_event_adjustment": 15.571294,
+          "n_nontrivial_revisions": 10
+        }
+      ],
+      "primary": {
+        "base": "W0",
+        "test": "W4",
+        "metric": "mae",
+        "mae_W0": 49.243258,
+        "mae_W4": 57.127978,
+        "diff": 7.88472,
+        "mean_d": -7.88472,
+        "p_value": 0.0826,
+        "ci_low": -17.008918,
+        "ci_high": 0.0,
+        "inference": "MBB_OK"
+      },
+      "revision_quality": {
+        "n_nontrivial_revisions": 10,
+        "beneficial_revision_rate": 0.3,
+        "harmful_revision_rate": 0.7,
+        "weekly_rescue_rate": 0.052632,
+        "n_w0_wrong": 19,
+        "false_weekly_override_rate": 0.225806,
+        "n_w0_right": 31
+      },
+      "market_baseline_fixed_at_W0": true
+    },
+    "diagnostic": {
+      "detection": {
+        "n_origins": 50,
+        "n_shock": 8,
+        "n_signal": 20,
+        "true_positive_caseA": 6,
+        "false_negative_caseB": 2,
+        "false_positive_caseC": 14,
+        "true_negative_caseD": 28,
+        "recall": 0.75,
+        "precision": 0.3,
+        "false_alarm_rate": 0.7,
+        "base_rate": 0.16,
+        "lift": 1.875,
+        "shock_quantile": 0.8,
+        "event_signal_quantile": 0.8
+      },
+      "transmission": {
+        "direction_M2XE_when_signal": 0.6,
+        "direction_M2XE_when_no_signal": 0.5,
+        "direction_M2XE_caseA": 0.166667,
+        "direction_M1_caseA": 0.333333,
+        "mae_M2XE_when_signal": 68.538938,
+        "mae_M1_when_signal": 68.427516
+      },
+      "channels": [
+        {
+          "channel": "shock_A_TRADE_POLICY",
+          "label": "철강·무역 정책",
+          "n_signal_months": 5,
+          "n_preceding_shock": 1,
+          "precision": 0.2,
+          "recall_contribution": 0.125,
+          "direction_correct": 0.6,
+          "mean_forecast_revision": 22.711068,
+          "mean_abs_forecast_revision": 22.711068,
+          "beneficial_revision_rate": 0.4
+        },
+        {
+          "channel": "shock_B_GEO_SUPPLY",
+          "label": "지정학·공급",
+          "n_signal_months": 8,
+          "n_preceding_shock": 3,
+          "precision": 0.375,
+          "recall_contribution": 0.375,
+          "direction_correct": 0.5,
+          "mean_forecast_revision": 18.394239,
+          "mean_abs_forecast_revision": 22.446171,
+          "beneficial_revision_rate": 0.375
+        },
+        {
+          "channel": "shock_C_DEMAND_MACRO",
+          "label": "수요·거시 충격",
+          "n_signal_months": 1,
+          "n_preceding_shock": 0,
+          "precision": 0.0,
+          "recall_contribution": 0.0,
+          "direction_correct": 1.0,
+          "mean_forecast_revision": -101.577816,
+          "mean_abs_forecast_revision": 101.577816,
+          "beneficial_revision_rate": 0.0
+        }
+      ],
+      "lags": [
+        {
+          "signal": "event_state_max",
+          "lag_months": 0,
+          "n": 50,
+          "corr_with_abs_change": 0.192197,
+          "corr_with_signed_change": -0.045816,
+          "n_high": 10,
+          "shock_rate_when_high": 0.4,
+          "shock_rate_when_low": 0.1
+        },
+        {
+          "signal": "event_state_max",
+          "lag_months": 1,
+          "n": 49,
+          "corr_with_abs_change": -0.074484,
+          "corr_with_signed_change": -0.326469,
+          "n_high": 10,
+          "shock_rate_when_high": 0.4,
+          "shock_rate_when_low": 0.102564
+        },
+        {
+          "signal": "event_state_max",
+          "lag_months": 2,
+          "n": 48,
+          "corr_with_abs_change": -0.221009,
+          "corr_with_signed_change": -0.549499,
+          "n_high": 10,
+          "shock_rate_when_high": 0.3,
+          "shock_rate_when_low": 0.105263
+        },
+        {
+          "signal": "event_state_max",
+          "lag_months": 3,
+          "n": 47,
+          "corr_with_abs_change": -0.333284,
+          "corr_with_signed_change": -0.390125,
+          "n_high": 10,
+          "shock_rate_when_high": 0.2,
+          "shock_rate_when_low": 0.135135
+        },
+        {
+          "signal": "event_surprise_max",
+          "lag_months": 0,
+          "n": 50,
+          "corr_with_abs_change": 0.218178,
+          "corr_with_signed_change": 0.229654,
+          "n_high": 10,
+          "shock_rate_when_high": 0.3,
+          "shock_rate_when_low": 0.125
+        },
+        {
+          "signal": "event_surprise_max",
+          "lag_months": 1,
+          "n": 49,
+          "corr_with_abs_change": 0.033212,
+          "corr_with_signed_change": -0.049934,
+          "n_high": 10,
+          "shock_rate_when_high": 0.3,
+          "shock_rate_when_low": 0.128205
+        },
+        {
+          "signal": "event_surprise_max",
+          "lag_months": 2,
+          "n": 48,
+          "corr_with_abs_change": 0.015693,
+          "corr_with_signed_change": -0.347517,
+          "n_high": 10,
+          "shock_rate_when_high": 0.3,
+          "shock_rate_when_low": 0.105263
+        },
+        {
+          "signal": "event_surprise_max",
+          "lag_months": 3,
+          "n": 47,
+          "corr_with_abs_change": -0.03025,
+          "corr_with_signed_change": -0.334318,
+          "n_high": 10,
+          "shock_rate_when_high": 0.3,
+          "shock_rate_when_low": 0.108108
+        }
+      ],
+      "surprise": [
+        {
+          "regime": "NEW_TRANSITION",
+          "n_months": 14,
+          "n_shock": 4,
+          "shock_rate": 0.285714,
+          "mean_abs_revision": 36.530875,
+          "beneficial_revision_rate": 0.285714,
+          "direction_correct": 0.571429
+        },
+        {
+          "regime": "PERSISTENT_STATE_ONLY",
+          "n_months": 36,
+          "n_shock": 4,
+          "shock_rate": 0.111111,
+          "mean_abs_revision": 34.382245,
+          "beneficial_revision_rate": 0.5,
+          "direction_correct": 0.527778
+        },
+        {
+          "regime": "NO_EVENT",
+          "n_months": 0,
+          "n_shock": 0,
+          "shock_rate": null,
+          "mean_abs_revision": null,
+          "beneficial_revision_rate": null,
+          "direction_correct": null
+        }
+      ],
+      "verdict": {
+        "DETECTION": {
+          "value": 0.75,
+          "reading": "급변 8건 중 6건에 사전 신호가 있었다",
+          "verdict": "적정"
+        },
+        "PRECISION": {
+          "value": 0.3,
+          "reading": "신호 20개월 중 6개월만 급변으로 이어졌다 (기저 0.160, lift 1.875)",
+          "verdict": "부족"
+        },
+        "DIRECTION": {
+          "value": 0.166667,
+          "reading": "Case A(급변+신호)에서 Event 모델의 방향 적중률",
+          "verdict": "부족"
+        },
+        "TIMING": {
+          "value": null,
+          "reading": "§14 시차 진단표 참조",
+          "verdict": "진단표로 보고"
+        },
+        "TRANSMISSION": {
+          "value": null,
+          "reading": "§13 채널별 beneficial_revision_rate 참조",
+          "verdict": "진단표로 보고"
+        },
+        "GENERALIZATION": {
+          "value": null,
+          "reading": "V6 가 이미 정량화했다 — Event 를 포함한 모델만 학습-실제 격차 +0.068~+0.237",
+          "verdict": "부족 (V6 동결 결과)"
+        }
+      }
+    },
+    "promotion": {
+      "rule_frozen_before_performance": true,
+      "conditions": [
+        "선택된 M2 결과가 같은 50 origin 에서 해당 M1 기준선을 개선한다",
+        "상대 MAE 개선 >= 3%",
+        "사전 선언된 추론이 5% 수준에서 개선을 지지하거나, 사전 선언 95% 구간이 무개선을 배제한다",
+        "한두 개 origin 이 결과를 만들지 않는다(민감도 확인)",
+        "Event 기제가 비자명하다 — 월간 게이트가 사실상 상수가 아니거나 주간 Event 수정이 유의미하게 0 이 아니다"
+      ],
+      "gate_is_effectively_constant": true,
+      "promoted": false,
+      "failed_condition": 5,
+      "reason": "Event 기제가 비자명해야 한다는 조건이 실패했다 — 게이트가 사실상 상수이고 50개 시점 중 한 번도 열리지 않았다."
+    },
+    "data_rights": {
+      "total": 9,
+      "pass": 3,
+      "review": 4,
+      "reject": 2,
+      "new_organizations_introduced": 0,
+      "raw_documents_exported": false,
+      "rows": [
+        {
+          "name": "PPI Detailed Report — 2007-01 ~ 2014-12 회차",
+          "org": "U.S. Bureau of Labor Statistics",
+          "status": "PASS",
+          "used": true,
+          "checked": "2026-08-23"
+        },
+        {
+          "name": "PPI Detailed Report — 2006-12 이전 회차",
+          "org": "U.S. Bureau of Labor Statistics",
+          "status": "REVIEW",
+          "used": false,
+          "checked": "2026-08-27"
+        },
+        {
+          "name": "Employment Situation 아카이브 (AWHMAN 장기)",
+          "org": "U.S. Bureau of Labor Statistics",
+          "status": "REVIEW",
+          "used": false,
+          "checked": "2026-08-27"
+        },
+        {
+          "name": "G.17 archived releases (INDPRO / IPG331S / CAPUTLG331S 장기)",
+          "org": "Federal Reserve Board of Governors",
+          "status": "PASS",
+          "used": false,
+          "checked": "2026-08-23"
+        },
+        {
+          "name": "FRED / ALFRED",
+          "org": "Federal Reserve Bank of St. Louis",
+          "status": "REJECT",
+          "used": false,
+          "checked": "2026-08-23"
+        },
+        {
+          "name": "상업 스크랩 가격 피드 · 뉴스 원문 코퍼스 · IMF 경유 계열",
+          "org": "복수",
+          "status": "REJECT",
+          "used": false,
+          "checked": "2026-08-23"
+        },
+        {
+          "name": "공식 Event registry (기존, known_at 일 단위)",
+          "org": "복수 미국 연방기관 (직접 발표문)",
+          "status": "PASS",
+          "used": true,
+          "checked": "2026-08-25"
+        },
+        {
+          "name": "Federal Register API",
+          "org": "Office of the Federal Register (NARA) / GPO",
+          "status": "REVIEW",
+          "used": false,
+          "checked": "2026-08-27"
+        },
+        {
+          "name": "Commerce/ITA Steel Import Monitoring (SIMA)",
+          "org": "U.S. Department of Commerce, ITA",
+          "status": "REVIEW",
+          "used": false,
+          "checked": "2026-08-27"
+        }
+      ]
+    }
+  },
   "m1_diagnosis": {
     "rows_per_feature_min": 3.273,
     "n_features_M1": 22,
@@ -1833,6 +2363,14 @@
       "problem": "이번에는 정확도가 아니라 **구조**를 바꿨습니다. 가격이력에 종속되지 않은 독립 모델을 만들고, 평상에는 기존 모델을 쓰다가 급변 의심 구간에서만 Event 가 문을 열어 독립 전문가로 갈아타게 했습니다.",
       "diagnosis": "게이트가 50개 예측시점에서 **한 번도 열리지 않았고**, 실제 급변에 사전 Event 신호가 있던 달에서 오히려 **가장 낮았습니다**(0.140 vs 0.21~0.23). Event 만 쓴 모델은 급변 8개월의 방향을 **8번 다 틀렸습니다.** MAE 는 낮아졌지만 게이트가 사실상 상수라 그것은 regime 전환이 아니라 **고정 가중 앙상블 효과**입니다.",
       "next_change": "Event 모델을 더 만들지 않습니다. 남은 경로는 **더 긴 과거 이력** 하나뿐이며, 급변 8개월을 늘리지 못하면 이 질문들은 검정력을 갖지 못합니다."
+    },
+    {
+      "label": "M2 V9",
+      "mae": 46.977392,
+      "headline": "데이터를 늘렸더니 M0 만 좋아졌다",
+      "problem": "모델을 바꾸는 대신 **과거 학습정보를 69개월 늘렸습니다.** 예측 대상 50개월은 그대로 두고 학습 지지만 키웠습니다 — BLS 공식 문서를 2008년까지 거슬러 재구성했습니다.",
+      "diagnosis": "과거 PPI 기반 모델이 **49.19 → 45.57 (p=0.045)** 로 좋아졌습니다. 이 프로젝트에서 **처음으로 통계적으로 유의한 개선**이며, 더 나은 모델이 아니라 더 많은 데이터에서 왔습니다. 그러나 같은 지지 위에서 시장 정보를 더하면 오히려 8% 나빠지고, Event 게이트는 학습행을 75% 늘려도 **여전히 한 번도 열리지 않았습니다.**",
+      "next_change": "Event 의 약점이 표본 크기가 아님이 확인됐습니다. 탐지는 되는데(recall 0.75) 전달이 안 됩니다(급변+신호 6개월 중 방향 적중 1개월). 다음은 Event 전달 모델입니다."
     }
   ],
   "agent_team": {
@@ -2011,6 +2549,14 @@
   "v8_ds_md": "에이전트가 제안 3건을 냈고 **독립 QA 가 1건만 승인**했습니다. 그리고 승인된 그 1건조차 **데이터가 스스로 거절했습니다** — 50개 예측시점 중 **49개에서 \"재보정하지 않음\"** 이 선택됐습니다.\n\n**QA 가 없었다면 어떻게 됐을까요.** QA 는 제안서의 사실 주장을 하나도 믿지 않고 전부 원본에서 재확인해 **8건이 틀렸음**을 찾아냈습니다. 그중 둘이 결정적이었습니다 — 주장된 안전장치가 **실제로는 존재하지 않았고**, 추정된 계수는 **음수**였습니다.\n\n> 원안대로 실행했다면 대부분의 예측시점에서 **기존 모델의 방향 판단을 강제로 뒤집었을 것입니다.**\n\nQA 가 강제한 안전장치가 그것을 막았고, QA 가 찾아낸 또 다른 결함(과거 시점에 공개되지 않았던 개정값 사용)도 실행 전에 제거됐습니다. **독립 QA 가 결과를 바꾼 사례로 기록합니다.**",
   "v8_expansion_md": "**시장 변수를 아무리 버려도 창이 늘지 않습니다.**\n\n일부 변수가 창을 제약한다면 그것을 빼서 더 긴 이력을 얻을 수 있습니다. 재구성 가능성만 근거로(성능 일절 미참조) 계산한 결과, 시장 변수를 **하나까지 줄여도 이득은 0개월**이었습니다.\n\n> 창을 묶고 있는 것은 시장 변수가 아니라 **예측 대상 자신**입니다. **유일한 지렛대는 예측 대상을 뒤로 늘리는 것뿐입니다.**\n\n그 확장은 **확인하지 못했습니다.** 문서 존재 확인 요청이 접근 거부(403)를 받았고, 동결된 취득 정책이 *\"접근 거부를 만나면 즉시 중단하고 재시도· 우회하지 않는다\"* 를 요구하므로 다른 방법으로 재요청하지 않았습니다.\n\n**이것은 방법론적 차단이지 저작권 차단이 아닙니다.** 해당 자료는 공공 도메인이고 재사용 권리 판정은 통과입니다. 막힌 것은 권리가 아니라 우리가 스스로에게 건 접근 규칙입니다. 그래서 \"확장이 불가능하다\"가 아니라 **\"확인하지 못했다\"** 고 적습니다.",
   "v8_weekly_md": "**먼저 오해를 제거합니다.**\n\n> 주간 데이터는 월별 예측 대상 50개를 200개로 만들지 **않습니다.** 예측 대상 자체가 월별 발표이기 때문입니다.\n\n주간 데이터가 줄 수 있는 것은 **정보 도달 타이밍**뿐입니다 — 월 T 를 예측할 때 4주 전 / 3주 전 / 2주 전 / 1주 전으로 나눠 그 시점까지 공개된 정보를 반영하는 구조입니다.\n\n판정 결과는 정직하게 부정적입니다. **강함(경제 채널) · 안전함(권리) · 검증 가능함(과거 시점 재구성)을 동시에 만족하는 후보가 하나도 없습니다.** 가장 강한 후보는 권리는 통과하지만 과거 주 시점 데이터를 다시 조회할 경로를 확인하지 못했고, 확실히 안전한 후보들은 채널이 약하거나 이미 확보된 신호입니다.",
+  "v9_intro_md": "지금까지 아홉 번 모델을 바꿔 봤습니다. V9 는 **모델 대신 데이터**를 바꿉니다.\n\nBLS 공식 문서를 거슬러 올라가 과거 이력을 **69개월** 늘렸습니다. **예측 대상 50개월은 정확히 그대로**이고 늘어난 것은 학습 정보뿐입니다 — 그래서 이것은 새로운 검증창이 아니라 **같은 창에서 학습 지지만 늘린 실험**입니다.",
+  "v9_support_md": "| | 첫 예측시점 | 마지막 | 최초 학습월 |\n|---|---|---|---|\n| 기존 | 72 | 117 | 2015-11 |\n| **V9 장기** | **126** | **174** | **2009-12** |\n\n첫 예측시점 기준 **+75%**.\n\n재구성이 맞는지 확인하는 것이 가장 중요했습니다. 같은 문서를 **두 가지 독립적인 방법**으로 읽어 대조한 결과 **30건 일치 · 0건 불일치** 였습니다.",
+  "v9_headline_md": "**이 프로젝트에서 처음으로 통계적으로 유의한 개선이 나왔습니다. 그리고 그것은 더 나은 모델이 아니라 더 많은 데이터에서 왔습니다** — 알고리즘은 한 글자도 바뀌지 않았습니다.\n\n과거 PPI 기반 모델이 **49.19 → 45.57** 로 좋아졌습니다(**+7.4%**, p = 0.045). 급변한 달에서도 함께 좋아졌고(121.5 → 112.1), 한두 달이 만든 결과가 아닙니다(하나씩 빼도 최소 +5.6%).",
+  "v9_negative_md": "**나머지는 전부 부정적이고, 그 부정이 이번에는 더 많은 것을 말해 줍니다.**\n\n- 같은 지지 위에서 **시장 정보를 더하면 8% 나빠집니다** (45.57 → 49.24). 이력이 짧아서 시장 정보가 안 먹힌 것이 아니었습니다.\n- **Event 게이트는 학습행을 75% 늘려도 여전히 한 번도 열리지 않았습니다** (평균 0.216, 표준편차 0.032, 0.5 초과 0/50).\n\n> 즉 **게이트가 열리지 않은 것은 표본이 부족해서가 아닙니다.** V8 이 남긴 \"지지가 늘면 달라지는가\"라는 질문에 V9 가 아니오로 답했습니다.",
+  "v9_asymmetry_md": "**반드시 함께 읽어야 하는 것이 있습니다.**\n\n공식 사건 기록은 **늘리지 못했습니다.** 과거 사건을 소급해서 채우려면 규칙을 먼저 고정하고 연대순으로 넣어야 하는데, 그 작업을 편향 없이 수행할 방법을 이번 단계에서 확보하지 못했습니다. 편향 없는 소급 구축이 불가능하면 **만들지 않습니다.**\n\n> 그래서 **M2 는 M0/M1 과 같은 지지 증가를 받지 못했습니다.** 이 비대칭을 지우고 \"Event 가 더 많은 데이터로도 실패했다\"고 쓰면 부정직합니다.",
+  "v9_weekly_md": "월간 예측 대상을 그대로 두고, **시장 정보를 월초에 고정**한 뒤 **새로 알려진 공식 사건만** 주 단위로 반영했습니다. 그래야 \"사건 자체가 무엇을 바꿨는가\"를 깨끗하게 가릴 수 있습니다.\n\n사건 흐름 자체가 성깁니다 — 새 사건이 도착한 (월,주) 칸이 **200개 중 19개**, 그런 대상월이 **50개 중 14개** 입니다.\n\n**결과는 명확한 부정입니다. W0 49.24 → W4 57.13** — 월 안에서 사건 정보가 도착할수록 예측이 **나빠집니다.** 방향 정확도도 0.620 에서 0.500 으로 단조 하락합니다.\n\n- 유익한 수정 **0.30** vs 유해한 수정 **0.70**\n- 주간 구제 0.053 vs 잘못된 뒤집기 0.226",
+  "v9_diagnostic_md": "### 사건은 잘 잡습니다. 그런데 가격으로 옮기지 못합니다.\n\n| | 값 | 읽는 법 |\n|---|---|---|\n| **탐지(Recall)** | **0.75** | 급변 8건 중 6건에 사전 신호가 있었다 |\n| **정밀도(Precision)** | **0.30** | 신호 20개월 중 6개월만 급변으로 이어졌다 |\n| 오경보율 | 0.70 | |\n| Lift | 1.88 | 신호가 급변률을 약 2배로 올린다 |\n| **급변+신호에서 방향** | **0.167** | 그 6개월 중 1개월만 방향 적중 |\n| 같은 6개월, 시장 모델 | 0.333 | |\n\n> **사건이 도와야 할 바로 그 달에, 사건 모델이 시장 모델보다 방향을 더 못 맞힙니다.**\n\n그리고 타이밍은 문제가 아닙니다 — 신호의 급변 예고력은 **당월~1개월 전에 가장 크고** 3개월 전으로 갈수록 사라집니다. 정보는 제때 도착합니다.\n\n가장 날카로운 진단은 이것입니다.\n\n| | 개월 | 급변률 | 유익한 수정 |\n|---|---|---|---|\n| **새로 발표된 사건이 있던 달** | 14 | **0.286** | **0.286** |\n| 이미 알려진 상태만 있던 달 | 36 | 0.111 | **0.500** |\n\n> **급변을 가장 잘 예고하는 신호가, 모델이 가장 잘못 다루는 신호입니다.** 새 발표는 \"무언가 일어난다\"를 알려 주지만, 현재 모델이 그것을 **방향과 크기**로 옮기는 매핑이 틀렸습니다. 이것이 전달 문제의 핵심입니다.",
+  "v9_promotion_md": "성능을 보기 **전에** 고정한 5개 조건을 그대로 적용했습니다.\n\n| # | 조건 | 결과 |\n|---|---|---|\n| 1 | M2 가 해당 기준선을 개선 | 통과 |\n| 2 | 상대 개선 ≥ 3% | 통과 (4.60%) |\n| 3 | 추론이 지지 | 구간은 통과 (p = 0.138) |\n| 4 | 한두 달이 만든 결과가 아님 | 대체로 통과 |\n| 5 | **사건 기제가 비자명** | **실패 — 게이트가 상수** |\n\n**조건 5 실패 → Executive Summary 로 승격하지 않습니다.** 규칙을 결과를 보고 바꾸지 않습니다.",
   "v5_limitation_md": "**가장 큰 제약은 여전히 표본 크기이며, V5 는 그 제약의 구체적 형태를 처음 드러냈습니다.**\n\n예측시점마다 후보가 수백~수천 개인데 내부 검증에 쓸 수 있는 달은 36개뿐입니다. 난수 실험 결과, **예측 대상과 아무 관계가 없는 잡음조차** 내부 검증 오차를 중앙값 1.6%(시장) / 5.6%(Event) 개선했습니다.\n\n즉 이 규모에서는 **모델 선택 자체가 과적합의 주된 원천**입니다. 그래서 12% 문턱을 두었고, 그 문턱이 다시 진짜 시장 신호도 일부 막았습니다. **새 변수가 아니라 더 긴 과거 이력만이 이 딜레마를 풉니다.**",
   "result_reading_md": "**결과를 그대로 보고합니다.** 시장 정보를 더한 M1 도, 공식 사건 정보를 더한 M2 계열도, 단계 보정 구조의 M1-R·M2-R 도 **M0 를 개선하지 못했습니다.** 이 조건에서 가장 정확한 것은 여전히 과거 PPI 이력만 쓰는 M0 입니다. **\"유의하지 않음\"과 \"효과 없음\"은 다릅니다** — 예측 시점 50개로는 검정력이 제한적입니다.",
   "v4_architecture_md": "**V4 는 정보를 한꺼번에 넣지 않고 층으로 쌓습니다.**\n\n- **M0** — 과거 PPI 이력만으로 예측합니다.\n- **M1-R** — M0 가 설명하지 못한 부분을 기존 시장·산업 정보로 보정합니다.\n- **M2-R** — M1-R 이 설명하지 못한 부분을 공식 Event 정보로 보정합니다.\n\n이 구조에서는 **`M2-R − M1-R` 이 정확히 Event 보정폭**입니다. 이전(V3)처럼 변수를 추가하는 순간 규제 강도가 재선택되고 전체 계수가 다시 적합되어 효과가 섞이는 일이 **구조적으로 일어날 수 없습니다.**",

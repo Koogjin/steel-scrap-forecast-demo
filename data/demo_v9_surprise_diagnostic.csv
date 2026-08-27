@@ -1,0 +1,4 @@
+regime,n_months,n_shock,shock_rate,mean_abs_revision,beneficial_revision_rate,direction_correct
+NEW_TRANSITION,14,4,0.285714,36.530875,0.285714,0.571429
+PERSISTENT_STATE_ONLY,36,4,0.111111,34.382245,0.5,0.527778
+NO_EVENT,0,0,,,,

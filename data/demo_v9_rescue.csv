@@ -1,0 +1,4 @@
+candidate,base,rescue_rate,rescues,base_wrong_cases,false_override_rate,false_overrides,base_correct_cases,rescue_precision,substantial_departures
+V9_M1_LH,V9_M1_LH,0.0,0,19,0.0,0,31,,0
+V9_M2_XE,V9_M1_LH,0.368421,7,19,0.322581,10,31,0.423077,26
+V9_M2_LH,V9_M1_LH,0.052632,1,19,0.032258,1,31,0.5,4

@@ -1,0 +1,9 @@
+signal,lag_months,n,corr_with_abs_change,corr_with_signed_change,n_high,shock_rate_when_high,shock_rate_when_low
+event_state_max,0,50,0.192197,-0.045816,10,0.4,0.1
+event_state_max,1,49,-0.074484,-0.326469,10,0.4,0.102564
+event_state_max,2,48,-0.221009,-0.549499,10,0.3,0.105263
+event_state_max,3,47,-0.333284,-0.390125,10,0.2,0.135135
+event_surprise_max,0,50,0.218178,0.229654,10,0.3,0.125
+event_surprise_max,1,49,0.033212,-0.049934,10,0.3,0.128205
+event_surprise_max,2,48,0.015693,-0.347517,10,0.3,0.105263
+event_surprise_max,3,47,-0.03025,-0.334318,10,0.3,0.108108
