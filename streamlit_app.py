@@ -88,6 +88,10 @@ def load():
         ("v6_support", "demo_v6_support.csv"),
         ("v6_comparisons", "demo_v6_comparisons.csv"),
         ("v6_selected", "demo_v6_selected_models.csv"),
+        ("v7_metrics", "demo_v7_metrics.csv"),
+        ("v7_cmp", "demo_v7_comparisons.csv"),
+        ("v7_risk", "demo_v7_risk_by_origin.csv"),
+        ("v7_cond", "demo_v7_conditional_by_origin.csv"),
         ("x_registry", "x_feature_registry.csv"),
         ("official_metrics", "metrics.csv"),
         ("v3_metrics", "demo_v3_metrics.csv"),
@@ -109,6 +113,7 @@ k = meta["kpi"]
 v3 = meta["demo_v3"]
 v5 = meta["demo_v5"]
 v6 = meta["demo_v6"]
+v7 = meta["demo_v7"]
 #: §31 — 상태 라벨의 단일 출처. export 단계에서 지표 방향을 적용해 만든 값이다.
 EXEC_V = v6["exec_verdicts"]
 OPS = v5["operational"]
@@ -683,6 +688,245 @@ with tabs[2]:
     with st.expander("Event 는 학습에서만 유용해 보였는가?"):
         st.markdown(meta["v6_generalization_md"])
 
+    # =======================================================================
+    # §PART N — Event Risk & Conditional Value (V7)
+    #
+    # 새 최상위 탭을 만들지 않는다. Event Intelligence 안의 한 섹션이다.
+    # 카드의 상태 라벨은 손으로 적지 않는다 — export 단계에서 지표 방향 판정기가
+    # 만든 값(v7["risk_cards"])을 그대로 읽는다.
+    # =======================================================================
+    st.divider()
+    st.markdown("### Event Risk & Conditional Value")
+    st.markdown(meta["v7_intro_md"])
+
+    rcards = st.columns(4)
+    for col, card in zip(rcards, v7["risk_cards"]):
+        v = card["verdict"]
+        p = card.get("p_value")
+        pstr = (f"<br><span style='font-size:11.5px;color:#9CA3AF'>"
+                f"p = {p:.3f}</span>" if p is not None else "")
+        col.markdown(
+            f"<div style='background:#F8FAFC;border:1px solid #E2E8F0;"
+            f"border-left:5px solid {VCOLOR[v]};border-radius:8px;padding:14px;"
+            f"height:100%'>"
+            f"<span style='font-size:12.5px;color:#6B7280'>{card['label']}</span>"
+            f"<br><b style='font-size:20px;color:{VCOLOR[v]}'>{v}</b>"
+            f"<br><span style='font-size:12.5px;color:#374151'>"
+            f"{card['detail']}</span>"
+            f"<br><span style='font-size:11.5px;color:#9CA3AF'>"
+            f"{card['metric_label']}</span>{pstr}</div>",
+            unsafe_allow_html=True)
+    st.caption(
+        "네 카드는 **서로 다른 지표**를 씁니다 (Interval Score · Brier · MAE). "
+        "지표마다 좋아지는 방향이 다르므로 **공통 판정기**가 방향을 적용합니다 — "
+        "화면에서 손으로 적은 상태 라벨은 하나도 없습니다. "
+        "**p 값이 서술적 방향을 뒤집지 않습니다.**")
+
+    risk_view = st.radio(
+        "어떤 위험 질문을 볼까요?",
+        ["예측 불확실성", "급등 위험", "시장 상황별 Event 효과",
+         "새로 들어온 Event 정보"],
+        index=0, horizontal=True, key="v7_risk")
+
+    v7r = D["v7_risk"].copy()
+    v7r["month_dt"] = pd.to_datetime(v7r["target_month"] + "-01")
+    v7cd = D["v7_cond"].copy()
+
+    def _v7v(track, model, col):
+        s = D["v7_metrics"]
+        s = s[(s["track"] == track) & (s["model"] == model)]
+        if s.empty or pd.isna(s[col].iloc[0]):
+            return None
+        return float(s[col].iloc[0])
+
+    # ================= 예측 불확실성 (PRIMARY) =========================
+    if risk_view.startswith("예측"):
+        st.markdown("#### 예측 불확실성 — **1차 가설입니다**")
+        pv7 = v7["primary"]
+        fig = go.Figure()
+        fig.add_scatter(x=v7r["month_dt"], y=v7r["U1_hi"], name="80% 구간 상단",
+                        line=dict(color="rgba(219,39,119,0.0)"),
+                        showlegend=False, hoverinfo="skip")
+        fig.add_scatter(x=v7r["month_dt"], y=v7r["U1_lo"],
+                        name="Event 조건부 80% 예측구간", fill="tonexty",
+                        fillcolor="rgba(219,39,119,0.14)",
+                        line=dict(color="rgba(219,39,119,0.0)"))
+        fig.add_scatter(x=v7r["month_dt"], y=v7r["M1_star"],
+                        name=LABEL["M1_star"] + " 예측",
+                        line=dict(color=COLORS["M1_star"], width=2.2, dash="dot"))
+        fig.add_scatter(x=v7r["month_dt"], y=v7r["y_true"], name="실제 WPU1012",
+                        line=dict(color=COLORS["actual"], width=2.8))
+        show(finish(
+            fig, question="Q. 예측이 얼마나 틀릴 수 있는지를 제대로 알려주는가?",
+            title="목표 80% 구간이 실제로는 100% 를 덮었다  "
+                  "<span style='font-size:13px;color:#6B7280'>"
+                  "실제값이 구간을 벗어난 적이 한 번도 없음</span>",
+            ylab="철·강 스크랩 PPI 지수", xlab="대상 월",
+            footnote=f"{FOOT_TARGET}  ·  평가 시점 {v7['n_origins_risk']}개",
+            height=470))
+        a, b, c = st.columns(3)
+        a.metric("목표 커버리지", f"{v7['primary_interval']:.0%}")
+        b.metric("실제 커버리지 (Event 조건부)", f"{pv7['U1_coverage']:.0%}",
+                 delta=f"{pv7['U1_coverage'] - v7['primary_interval']:+.0%}",
+                 delta_color="inverse")
+        c.metric("평균 구간 폭", f"{pv7['U1_width']:.0f}",
+                 help="지수 Point. 폭이 좁을수록 정보가 많다는 뜻입니다")
+        takeaway(
+            f"Event 조건부 구간이 Event 없는 구간보다 Interval Score 를 "
+            f"<b>{pv7['U0_interval_score']:.0f} → {pv7['U1_interval_score']:.0f}</b> "
+            f"로 낮췄지만 <b>통계적으로 유의하지 않습니다</b> "
+            f"(p = {pv7['inference']['p_value']:.3f}). 그리고 "
+            "<b>두 구간 모두 커버리지가 100%</b> 입니다 — 구간이 정확한 것이 "
+            "아니라 <b>너무 넓습니다.</b>")
+        st.markdown(meta["v7_coverage_md"])
+        reading_guide(
+            "분홍색 띠가 모델이 제시한 80% 예측 구간이고, 검은 선이 실제값입니다. "
+            "제대로 보정됐다면 실제값이 10번 중 2번은 띠 밖으로 나가야 합니다.",
+            f"{v7['n_origins_risk']}개 시점에서 <b>한 번도 벗어나지 않았습니다.</b> "
+            "구간이 너무 넓다는 뜻입니다.",
+            "이것은 Event 의 문제가 아니라 <b>표본 구간의 문제</b>입니다. 구간 폭은 "
+            "과거 오차에서 나오는데, 그 과거(2021~22)가 평가 구간(2023~25)보다 "
+            "훨씬 격렬했습니다.")
+
+    # ================= 급등 위험 =======================================
+    elif risk_view.startswith("급등"):
+        st.markdown("#### 급등·급락 위험 — 표본이 부족했습니다")
+        tl = v7["tail"]
+        st.warning(
+            f"**사전에 정한 최소 지지 규칙을 넘지 못했습니다.** 급등 사례 "
+            f"**{tl['upper_positive']}건** · 급락 사례 **{tl['lower_positive']}건** "
+            f"— 규칙은 각 **{tl['min_positives']}건** 이었습니다. "
+            "임계값을 낮춰 사례를 늘리는 것은 **결과를 본 뒤의 조정**이므로 "
+            "하지 않았습니다.")
+        pairs = [("B_tail_upper", f"급등 (상위 {1 - tl['upper_q']:.0%})"),
+                 ("B_tail_lower", f"급락 (하위 {tl['lower_q']:.0%})")]
+        fig = go.Figure()
+        fig.add_bar(x=[lab for _, lab in pairs],
+                    y=[_v7v(t, "T0", "brier") for t, _ in pairs],
+                    name="시장 문맥만 (Event 없음)",
+                    marker_color=COLORS["M1_star"],
+                    text=[f"{_v7v(t, 'T0', 'brier'):.3f}" for t, _ in pairs],
+                    textposition="outside")
+        fig.add_bar(x=[lab for _, lab in pairs],
+                    y=[_v7v(t, "T1", "brier") for t, _ in pairs],
+                    name="+ Event 위험 정보", marker_color=COLORS["M2_star"],
+                    text=[f"{_v7v(t, 'T1', 'brier'):.3f}" for t, _ in pairs],
+                    textposition="outside")
+        fig.update_layout(barmode="group")
+        show(finish(
+            fig, question="Q. Event 정보가 급등·급락 위험을 감지하는가?",
+            title="급등·급락 위험 — 판정할 만한 사례 수가 없었다  "
+                  "<span style='font-size:13px;color:#6B7280'>"
+                  "Brier Score ↓ 낮을수록 정확</span>",
+            ylab="Brier Score (확률 예측 오차)", xlab="",
+            footnote=f"급등 {tl['upper_positive']}건 / 급락 "
+                     f"{tl['lower_positive']}건 — 사전 규칙 최소 "
+                     f"{tl['min_positives']}건 미달  ·  {FOOT_TARGET}",
+            height=440))
+        takeaway(
+            "서술적으로는 <b>두 경우 모두 Event 를 넣은 쪽이 더 나빴습니다.</b> "
+            "다만 사례 수가 규칙에 미달하므로 이 실험의 판정은 "
+            "<b>결론 유보</b>입니다 — '효과 없음'이 아니라 '판정할 수 없음'입니다.")
+        reading_guide(
+            "막대가 낮을수록 위험 확률을 정확히 맞힌 것입니다.",
+            "Event 를 더한 막대가 두 경우 모두 더 높습니다(더 부정확).",
+            "**사례가 4건·1건뿐입니다.** 이 수치는 몇 건이 바뀌면 크게 흔들립니다. "
+            "숫자보다 **표본 부족이라는 사실 자체가 결과**입니다.")
+
+    # ================= 시장 상황별 Event 효과 ==========================
+    elif risk_view.startswith("시장"):
+        st.markdown("#### 시장 상황별 Event 효과 — 사전선언 3개")
+        st.caption(
+            "**결과를 보기 전에 정확히 3개만** 선언했습니다. 결과를 본 뒤 짝을 "
+            "바꾸거나 더하지 않았습니다.")
+        st.dataframe(pd.DataFrame([
+            {"상호작용": it["label"].split(" × ")[0],
+             "시장 상태": it["label"].split(" × ")[1]}
+            for it in v7["interactions"]]), hide_index=True, width="stretch")
+        order = [("M1_CTRL", "시장 정보만", COLORS["M1_star"]),
+                 ("M2_INT", "+ 사전선언 상호작용 3개", COLORS["M2_star"])]
+        fig = go.Figure()
+        for m, lab, cl in order:
+            v = _v7v("C_D_conditional", m, "mae")
+            fig.add_bar(x=[lab], y=[v], marker_color=cl, showlegend=False,
+                        text=[f"{v:.2f}"], textposition="outside",
+                        textfont=dict(size=13))
+        show(finish(
+            fig, question="Q. Event 효과가 시장 상황에 따라 달라지는가?",
+            title="시장 상황을 함께 보면 Event 가 도움이 되는가?  "
+                  "<span style='font-size:13px;color:#6B7280'>"
+                  "MAE ↓ 낮을수록 정확 · 통제 실험</span>",
+            ylab="평균 예측오차 MAE (지수 Point)", xlab="",
+            footnote=f"{FOOT_TARGET}  ·  통제 트랙 "
+                     f"{v7['n_origins_conditional']}개 시점",
+            height=430, legend=False))
+        _ic = next(c for c in v7["risk_cards"] if c["role"] == "interaction")
+        takeaway(
+            f"MAE 가 <b>{_ic['base_value']:.2f} → {_ic['new_value']:.2f}</b> 로 "
+            f"낮아졌습니다. <b>V7 에서 유일하게 개선 방향</b>이지만 "
+            f"통계적으로 유의하지 않고(p = {_ic['p_value']:.3f}) "
+            "<b>보조 가설</b>이며 세 개를 함께 시험했는데 다중비교 보정이 "
+            "없습니다. V5 의 공식 결과를 대체하지 않습니다.")
+        reading_guide(
+            "두 막대는 **같은 통제 조건**에서 상호작용 항만 켜고 끈 결과입니다.",
+            "상호작용을 켠 쪽이 조금 낮습니다.",
+            "**이 정도 크기는 표본 50개에서 우연히 나올 수 있는 범위 안**입니다. "
+            "난수 실험에서 아무 관계 없는 잡음도 내부검증을 중앙값 1.6% "
+            "'개선'시켰습니다.")
+
+    # ================= 새로 들어온 Event 정보 ==========================
+    else:
+        st.markdown("#### 새로 들어온 Event 정보 — 발표창 신규분")
+        st.markdown(
+            "같은 사건이라도 **\"지금 유지되고 있는 상태\"** 와 "
+            "**\"예측 직전 창에 새로 들어온 것\"** 은 다른 정보일 수 있습니다. "
+            "두 표현을 같은 조건에서 비교했습니다.")
+        order = [("M1_CTRL", "시장 정보만", COLORS["M1_star"]),
+                 ("M2_PERSIST", "+ 지속형 Event 표현", COLORS["ME_star"]),
+                 ("M2_RW", "+ 발표창 신규 Event", COLORS["M2_star"])]
+        fig = go.Figure()
+        for m, lab, cl in order:
+            v = _v7v("C_D_conditional", m, "mae")
+            fig.add_bar(x=[lab], y=[v], marker_color=cl, showlegend=False,
+                        text=[f"{v:.2f}"], textposition="outside",
+                        textfont=dict(size=13))
+        show(finish(
+            fig, question="Q. 예측 직전에 새로 들어온 Event 가 더 유용한가?",
+            title="새로 들어온 Event 정보는 오히려 정확도를 떨어뜨렸다  "
+                  "<span style='font-size:13px;color:#6B7280'>"
+                  "MAE ↓ 낮을수록 정확 · 통제 실험</span>",
+            ylab="평균 예측오차 MAE (지수 Point)", xlab="",
+            footnote=f"{FOOT_TARGET}  ·  통제 트랙 "
+                     f"{v7['n_origins_conditional']}개 시점",
+            height=430, legend=False))
+        _sc = next(c for c in v7["risk_cards"] if c["role"] == "surprise")
+        takeaway(
+            f"발표창 신규 Event 만 쓴 모델이 "
+            f"<b>{_sc['base_value']:.2f} → {_sc['new_value']:.2f}</b> 로 "
+            f"<b>유의하게 더 나빴습니다</b> (p = {_sc['p_value']:.5f}). "
+            "실행 전에 적어 둔 예상과 일치합니다 — 월 단위 예측에서 "
+            "'발표창 신규분'은 이미 쓰고 있는 전이 신호와 상당 부분 겹치며, "
+            "겹치는 만큼 새 정보가 아니라 잡음이 됩니다.")
+        reading_guide(
+            "세 막대는 **같은 통제 조건**에서 Event 표현만 바꾼 결과입니다.",
+            "두 Event 표현 모두 시장 정보만 쓴 모델보다 높습니다(더 부정확).",
+            "이것은 **부정적 결과이며 그대로 보고합니다.** 유의하게 나온 방향이 "
+            "개선이 아니라 악화라는 점이 중요합니다.")
+
+    st.divider()
+    st.error(meta["v7_stop_rule_md"])
+    with st.expander("V7 전체 비교표 (여섯 가지 전부)"):
+        st.dataframe(pd.DataFrame([
+            {"Track": c["track"], "비교": f"{c['base']} → {c['test']}",
+             "지표": c["metric"], "차이": f"{c['diff']:+.4f}",
+             "p": f"{c['p_value']:.5f}",
+             "지위": "PRIMARY" if c["is_primary"] else "보조",
+             "비고": c["support"] or "—"} for c in v7["comparisons"]]),
+            hide_index=True, width="stretch")
+        st.caption(
+            "**하나도 숨기지 않았습니다.** 차이의 부호는 지표마다 의미가 다르므로 "
+            "카드의 판정을 함께 보십시오.")
+
 
     # ---- 1. PEP / NEP --------------------------------------------------
     st.divider()
@@ -916,11 +1160,12 @@ with tabs[4]:
     section = st.selectbox(
         "보고 싶은 항목", [
             "A. 공식 사전등록 실험 (N0 / M0 / M1)",
-            "B. Event 연구 발전 과정 (V1 → V5)",
+            "B. Event 연구 발전 과정 (V1 → V7)",
             "C. V5 통제 실험 (2×2)",
             "D. 진단 결과",
-            "E. 전체 Metrics Table",
-            "F. 방법론 · 산출물",
+            "E. V7 위험·조건부 가치 실험 (전체 비교)",
+            "F. 전체 Metrics Table",
+            "G. 방법론 · 산출물",
         ])
 
     if section.startswith("A"):
@@ -943,8 +1188,9 @@ with tabs[4]:
         ev = meta["m2_evolution"]
         fig = go.Figure()
         fig.add_bar(x=[e["label"] for e in ev], y=[e["mae"] for e in ev],
-                    marker_color=["#9CA3AF", "#D97706", "#BE185D", "#7C3AED",
-                                  "#DB2777"][:len(ev)],
+                    marker_color=[["#9CA3AF", "#D97706", "#BE185D", "#7C3AED",
+                                   "#DB2777", "#0D9488", "#B45309"][i % 7]
+                                  for i in range(len(ev))],
                     text=[f"{e['mae']:.1f}" for e in ev],
                     textposition="outside", showlegend=False)
         fig.add_hline(y=OPS["M0"], line=dict(color="#2563EB", width=1.6,
@@ -1049,6 +1295,35 @@ with tabs[4]:
                         footnote="NO_EVENT = 모델이 Event 를 쓰지 않기로 선택"))
 
     elif section.startswith("E"):
+        st.markdown(
+            "**V7 은 정확도가 아니라 위험을 물었습니다** — 예측 불확실성 구간, "
+            "급등·급락 위험, 시장 상황별 조건부 효과, 발표창 신규 Event. "
+            "여섯 가지 비교를 **하나도 빠짐없이** 싣습니다.")
+        st.dataframe(pd.DataFrame([
+            {"Track": c["track"], "비교": f"{c['base']} → {c['test']}",
+             "지표": c["metric"], "차이": f"{c['diff']:+.4f}",
+             "p": f"{c['p_value']:.5f}",
+             "지위": "PRIMARY" if c["is_primary"] else "보조",
+             "비고": c["support"] or "—"} for c in v7["comparisons"]]),
+            hide_index=True, width="stretch")
+        st.dataframe(
+            D["v7_metrics"][["track", "model", "n", "interval_score",
+                             "coverage", "average_width", "brier", "pr_auc",
+                             "mae", "support"]]
+            .rename(columns={"track": "Track", "model": "모델",
+                             "n": "시점 수",
+                             "interval_score": "Interval Score ↓",
+                             "coverage": "커버리지", "average_width": "평균 폭",
+                             "brier": "Brier ↓", "pr_auc": "PR-AUC ↑",
+                             "mae": "MAE ↓", "support": "비고"}),
+            hide_index=True, width="stretch")
+        st.markdown(meta["v7_stop_rule_md"])
+        st.download_button(
+            "V7 시점별 원자료 CSV 내려받기",
+            D["v7_risk"].to_csv(index=False).encode("utf-8-sig"),
+            "steel_scrap_v7_risk_by_origin.csv", "text/csv")
+
+    elif section.startswith("F"):
         st.markdown("모든 실험의 전체 지표입니다. **하나도 삭제되지 않았습니다.**")
         vm = D["v5_metrics"].copy()
         vm["모델"] = vm["model"].map(lambda m: LABEL.get(m, m))
@@ -1071,6 +1346,15 @@ with tabs[4]:
         st.markdown(
             f"- V5 방법론 동결본: `{v5['freeze_version']}` "
             "(예측 결과를 보기 **전에** 커밋)\n"
+            f"- V7 방법론 동결본: `{v7['freeze_version']}` "
+            "(예측 결과를 보기 **전에** 커밋)\n"
+            f"- V7 점 예측 재설계: "
+            f"**{'아니오' if v7['point_forecast_frozen_from_v5'] else '예'}** "
+            "(V5 의 M1* 를 그대로 사용)\n"
+            f"- V7 새 사건 기록 추가: "
+            f"**{'예' if v7['new_event_records_added'] else '아니오'}**\n"
+            f"- V7 중단 규칙 발동: "
+            f"**{'예' if v7['stop_rule_triggered'] else '아니오'}**\n"
             f"- 새 외부 데이터 추가: **{'예' if v5['new_raw_x_added'] else '아니오'}**\n"
             f"- 공식 사건 기록 변경: "
             f"**{'예' if v5['event_registry_changed'] else '아니오'}**\n"
@@ -1080,6 +1364,8 @@ with tabs[4]:
         st.markdown("#### 동봉 문서")
         for label, path in (("경영진 요약", "docs/executive_summary.md"),
                             ("방법론 요약", "docs/methodology_summary.md"),
+                            ("V7 결과와 해석", "docs/findings_v7.md"),
+                            ("다음 단계 계획", "docs/next_phase_plan.md"),
                             ("V6 결과와 해석", "docs/findings_v6.md"),
                             ("V5 결과와 해석", "docs/findings_v5.md"),
                             ("V4 결과와 해석", "docs/findings_v4.md"),
@@ -1093,5 +1379,6 @@ st.caption(
     f"공식 실행 커밋 `{meta['git_commit'][:12]}` · "
     f"사전등록 해시 `{meta['preregistration_sha256'][:12]}` · "
     f"V3 registry `{v3['registry_version']}` · "
-    f"V5 동결 `{v5['freeze_version']}` · 생성 {meta['exported_at']}"
+    f"V5 동결 `{v5['freeze_version']}` · V7 동결 `{v7['freeze_version']}` · "
+    f"생성 {meta['exported_at']}"
 )

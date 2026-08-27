@@ -1,0 +1,11 @@
+track,model,n,primary_metric,interval_score,coverage,coverage_error,average_width,status,n_positive,n_negative,brier,pr_auc,support,mae
+A_uncertainty,U0,37,interval_score,258.27107,1.0,0.2,258.27107,EXPLORATORY,,,,,,
+A_uncertainty,U1,37,interval_score,229.22089,1.0,0.2,229.22089,EXPLORATORY,,,,,,
+B_tail_upper,T0,37,brier,,,,,EXPLORATORY,4,33,0.158906,0.151194,UNDERPOWERED,
+B_tail_upper,T1,37,brier,,,,,EXPLORATORY,4,33,0.218376,0.110581,UNDERPOWERED,
+B_tail_lower,T0,37,brier,,,,,EXPLORATORY,1,36,0.031005,0.03125,UNDERPOWERED,
+B_tail_lower,T1,37,brier,,,,,EXPLORATORY,1,36,0.036534,0.043478,UNDERPOWERED,
+C_D_conditional,M1_CTRL,50,mae,,,,,EXPLORATORY,,,,,,47.136583
+C_D_conditional,M2_INT,50,mae,,,,,EXPLORATORY,,,,,,46.266525
+C_D_conditional,M2_PERSIST,50,mae,,,,,EXPLORATORY,,,,,,48.430478
+C_D_conditional,M2_RW,50,mae,,,,,EXPLORATORY,,,,,,48.959726

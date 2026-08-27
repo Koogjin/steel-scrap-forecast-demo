@@ -1,7 +1,7 @@
 # DEPLOYMENT AUDIT
 
-- 감사 시각(UTC): 2026-08-26T22:25:34+00:00
-- 검사 파일 수: 46
+- 감사 시각(UTC): 2026-08-27T00:10:32+00:00
+- 검사 파일 수: 52
 - 문제: **0건**
 
 > 배포된 앱이 공개로 보일 수 있다고 가정하고 **PUBLIC-SAFE 기준**으로 감사한다.
@@ -48,6 +48,10 @@
 - `data/demo_v6_regime.csv`
 - `data/demo_v6_selected_models.csv`
 - `data/demo_v6_support.csv`
+- `data/demo_v7_comparisons.csv`
+- `data/demo_v7_conditional_by_origin.csv`
+- `data/demo_v7_metrics.csv`
+- `data/demo_v7_risk_by_origin.csv`
 - `data/event_channel_panel_v5.csv`
 - `data/event_contribution_v3.csv`
 - `data/event_episode_registry_v3.csv`
@@ -65,7 +69,9 @@
 - `docs/findings_v4.md`
 - `docs/findings_v5.md`
 - `docs/findings_v6.md`
+- `docs/findings_v7.md`
 - `docs/methodology_summary.md`
+- `docs/next_phase_plan.md`
 - `README.md`
 - `requirements.txt`
 - `streamlit_app.py`

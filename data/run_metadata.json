@@ -1,6 +1,6 @@
 {
-  "exported_at": "2026-08-26",
-  "git_commit": "d01994437f24d629b6eda5992bc4a8ea625d431a",
+  "exported_at": "2026-08-27",
+  "git_commit": "902e37d7c2e6c6a4552e1a2430613fa3b34458c9",
   "preregistration_sha256": "86d9e7dcd0591757360813c1e4e1ef4d4fb7c752fc2078346f21ceeb5da04852",
   "freeze_manifest_sha256": "ca5bb8212b44fc7b7da71ff051c1239f95d541c141379280e97374973f926fc2",
   "target": {
@@ -17,7 +17,7 @@
     "n_derived_features": 12,
     "n_origins": 50,
     "n_event_records": 49,
-    "n_tests": 992,
+    "n_tests": 1060,
     "fred_dependency": 0
   },
   "common_support": {
@@ -859,6 +859,227 @@
       "ci_high": 0.022754
     }
   },
+  "demo_v7": {
+    "freeze_version": "V7A-2026-08-27",
+    "frozen_before_run": true,
+    "point_forecast_frozen_from_v5": true,
+    "new_raw_x_added": false,
+    "event_registry_changed": false,
+    "new_event_records_added": false,
+    "total_candidate_count": 45,
+    "n_origins_risk": 37,
+    "n_origins_conditional": 50,
+    "primary_interval": 0.8,
+    "primary": {
+      "U0_interval_score": 258.27107,
+      "U1_interval_score": 229.22089,
+      "delta": -29.05018,
+      "U0_coverage": 1.0,
+      "U1_coverage": 1.0,
+      "U0_width": 258.27107,
+      "U1_width": 229.22089,
+      "inference": {
+        "mean_d": 29.05018,
+        "p_value": 0.31815,
+        "ci_low": -19.564949,
+        "ci_high": 62.983214
+      },
+      "supported": false
+    },
+    "secondary": [
+      {
+        "track": "B_tail_upper",
+        "test": "T1",
+        "better": false,
+        "significant": false
+      },
+      {
+        "track": "B_tail_lower",
+        "test": "T1",
+        "better": false,
+        "significant": true
+      },
+      {
+        "track": "C_D_conditional",
+        "test": "M2_INT",
+        "better": true,
+        "significant": false
+      },
+      {
+        "track": "C_D_conditional",
+        "test": "M2_PERSIST",
+        "better": false,
+        "significant": false
+      },
+      {
+        "track": "C_D_conditional",
+        "test": "M2_RW",
+        "better": false,
+        "significant": true
+      }
+    ],
+    "strong_secondary_count": 0,
+    "stop_rule_triggered": true,
+    "interactions": [
+      {
+        "name": "INT_A_trade_x_caputl",
+        "shock": "shock_A_TRADE_POLICY",
+        "market": "CAPUTLG331S_level",
+        "label": "철강·무역 정책 충격 × 1차금속 가동률"
+      },
+      {
+        "name": "INT_B_geo_x_power",
+        "shock": "shock_B_GEO_SUPPLY",
+        "market": "WPU0542_chg_3m",
+        "label": "지정학·공급 충격 × 전력비용 모멘텀"
+      },
+      {
+        "name": "INT_C_demand_x_indpro",
+        "shock": "shock_C_DEMAND_MACRO",
+        "market": "INDPRO_chg_3m",
+        "label": "수요·거시 충격 × 산업생산 모멘텀"
+      }
+    ],
+    "risk_cards": [
+      {
+        "role": "uncertainty",
+        "label": "예측 불확실성 (80% 구간)",
+        "metric": "interval_score",
+        "metric_label": "Interval Score",
+        "verdict": "개선",
+        "descriptive_verdict": "개선",
+        "base_value": 258.27107,
+        "new_value": 229.22089,
+        "base_name": "Event 없음",
+        "new_name": "Event 조건부",
+        "diff": 29.05018000000001,
+        "p_value": 0.31815,
+        "support": "",
+        "detail": "Event 없음 258.3 → Event 조건부 229.2",
+        "note": "1차 가설은 **지지되지 않았습니다** (p = 0.318). 두 구간 모두 실제 커버리지가 **100%** 로 목표 80% 를 크게 넘어, 더 좁은 쪽을 고른 비교입니다."
+      },
+      {
+        "role": "tail",
+        "label": "급등 위험 (상위 20%)",
+        "metric": "brier",
+        "metric_label": "Brier Score",
+        "verdict": "결론 유보",
+        "descriptive_verdict": "악화",
+        "base_value": 0.158906,
+        "new_value": 0.218376,
+        "base_name": "Event 없음",
+        "new_name": "Event 추가",
+        "diff": -0.059469999999999995,
+        "p_value": 0.3237,
+        "support": "UNDERPOWERED",
+        "detail": "Event 없음 0.159 → Event 추가 0.218",
+        "note": "급등 사례가 **4건**뿐이라 사전에 정한 최소 지지(10건)를 넘지 못했습니다. 서술적으로는 Event 를 넣은 쪽이 더 나빴습니다."
+      },
+      {
+        "role": "interaction",
+        "label": "시장 상황별 Event 효과",
+        "metric": "mae",
+        "metric_label": "MAE",
+        "verdict": "개선",
+        "descriptive_verdict": "개선",
+        "base_value": 47.136583,
+        "new_value": 46.266525,
+        "base_name": "시장 정보만",
+        "new_name": "+ 사전선언 상호작용 3개",
+        "diff": 0.8700580000000002,
+        "p_value": 0.3535,
+        "support": "",
+        "detail": "시장 정보만 47.14 → + 사전선언 상호작용 3개 46.27",
+        "note": "이번 단계에서 **유일하게 개선 방향**이지만 통계적으로 유의하지 않고(p = 0.353) 보조 가설이며 다중비교 보정이 없습니다. V5 의 공식 결과를 대체하지 않습니다."
+      },
+      {
+        "role": "surprise",
+        "label": "새로 들어온 Event 정보",
+        "metric": "mae",
+        "metric_label": "MAE",
+        "verdict": "악화",
+        "descriptive_verdict": "악화",
+        "base_value": 47.136583,
+        "new_value": 48.959726,
+        "base_name": "시장 정보만",
+        "new_name": "+ 발표창 신규 Event",
+        "diff": -1.8231430000000017,
+        "p_value": 5e-05,
+        "support": "",
+        "detail": "시장 정보만 47.14 → + 발표창 신규 Event 48.96",
+        "note": "예측 직전 창에서 **새로 들어온** Event 만 쓴 모델이 **유의하게 더 나빴습니다** (p = 0.00005)."
+      }
+    ],
+    "tail": {
+      "upper_positive": 4,
+      "lower_positive": 1,
+      "min_positives": 10,
+      "upper_q": 0.8,
+      "lower_q": 0.2
+    },
+    "comparisons": [
+      {
+        "track": "A_uncertainty",
+        "base": "U0",
+        "test": "U1",
+        "metric": "interval_score",
+        "diff": -29.05018,
+        "p_value": 0.31815,
+        "is_primary": true,
+        "support": ""
+      },
+      {
+        "track": "B_tail_upper",
+        "base": "T0",
+        "test": "T1",
+        "metric": "brier",
+        "diff": 0.05947,
+        "p_value": 0.3237,
+        "is_primary": false,
+        "support": "UNDERPOWERED"
+      },
+      {
+        "track": "B_tail_lower",
+        "base": "T0",
+        "test": "T1",
+        "metric": "brier",
+        "diff": 0.005529,
+        "p_value": 0.0026,
+        "is_primary": false,
+        "support": "UNDERPOWERED"
+      },
+      {
+        "track": "C_D_conditional",
+        "base": "M1_CTRL",
+        "test": "M2_INT",
+        "metric": "mae",
+        "diff": -0.870058,
+        "p_value": 0.3535,
+        "is_primary": false,
+        "support": ""
+      },
+      {
+        "track": "C_D_conditional",
+        "base": "M1_CTRL",
+        "test": "M2_PERSIST",
+        "metric": "mae",
+        "diff": 1.293895,
+        "p_value": 0.76865,
+        "is_primary": false,
+        "support": ""
+      },
+      {
+        "track": "C_D_conditional",
+        "base": "M1_CTRL",
+        "test": "M2_RW",
+        "metric": "mae",
+        "diff": 1.823143,
+        "p_value": 5e-05,
+        "is_primary": false,
+        "support": ""
+      }
+    ]
+  },
   "m1_diagnosis": {
     "rows_per_feature_min": 3.273,
     "n_features_M1": 22,
@@ -919,6 +1140,14 @@
       "problem": "Event 가 지수 수준을 못 맞힌다면 방향·큰 변동·전환점에는 도움이 될까? 세 가지를 각각 사전등록해 시험했습니다.",
       "diagnosis": "세 역할 모두 개선이 없었습니다. 그러나 이번에 처음으로 이유가 보입니다 — Event 를 포함한 모델만 **학습에서 더 좋아 보이고 실제 예측에서 무너지는** 격차를 보였습니다.",
       "next_change": "이번 단계에서 추가 조정을 하지 않았습니다. 남은 제약은 예측 시점 50개라는 규모 자체입니다."
+    },
+    {
+      "label": "M2 V7",
+      "mae": 51.039376,
+      "headline": "위험·조건부 질문으로 바꿔도 답은 같았고, 여기서 멈춘다",
+      "problem": "정확도가 아니라 **불확실성 구간·급등 위험·시장 상황별 조건부 효과·발표창 신규정보** 네 가지를 사전등록해 물었습니다. (수준 예측 모델은 V5 에서 동결된 채 그대로입니다 — 이 막대는 V5 M2* 값입니다.)",
+      "diagnosis": "1차 가설인 80% 구간이 지지되지 않았고, 더 중요하게는 **두 구간 모두 실제 커버리지가 100%** 였습니다. 보정에 쓰는 과거 오차(2021~22 격변기)가 평가 구간(2023~25)보다 훨씬 넓기 때문입니다. 급등 사례는 4건뿐이었습니다.",
+      "next_change": "사전에 정한 **중단 규칙**이 발동했습니다. Event feature 와 모형을 더 찾지 않고, 다음 단계를 **더 긴 Point-in-Time 이력 확보**로 전환합니다."
     }
   ],
   "agent_team": {
@@ -1086,6 +1315,9 @@
   "v5_event_md": "**Event 정보는 이번에도 예측 정확도를 개선하지 못했습니다.** 네 개의 정보 조합(2×2) 어디에서도, 두 트랙 모두에서 개선이 없었습니다.\n\n그러나 V4 와 결정적으로 다른 점이 있습니다. V4 에서는 Event 가 **모든** 예측시점에서 강제로 사용되어 중앙값 15 지수 Point 씩 예측을 흔들었습니다. V5 에서는 모델이 학습 근거를 보고 **90% 의 시점에서 Event 를 쓰지 않기로 스스로 선택**했고, 중앙값 보정폭은 **0.0** 입니다.\n\n그 결과 V4 의 Event 모델(MAE 67.40) 대비 V5 는 **MAE 51.04** 로 크게 나아졌습니다. 다만 이것은 **Event 를 유용하게 만든 것이 아니라 해롭지 않게 만든 것**입니다.",
   "v5_novel_md": "**Event 정보 중 '이미 아는 것으로 설명되지 않는 부분'만 남긴 표현**을 후보로 넣었습니다. 최근 가격과 시장 지표로 Event 압력을 예측한 뒤, 그 예측분을 뺀 나머지입니다.\n\n학습 데이터 안에서는 이 **Novel 표현이 원본을 100% 이겼습니다** — Event 가 선택된 모든 경우에 Novel 이 뽑혔고 원본은 한 번도 선택되지 않았습니다. **그럼에도 예측 정확도는 개선되지 않았습니다.**",
   "v6_generalization_md": "**그렇습니다 — 그리고 이번에 처음으로 그것을 수치로 볼 수 있습니다.**\n\n각 모델이 학습 내부 검증에서 낸 정확도와 실제 예측에서 낸 정확도의 차이(1개월 방향)입니다. 양수면 **학습에서 더 좋아 보였다**는 뜻입니다.\n\n| 모델 | 학습에서 더 좋아 보인 정도 |\n|---|---|\n| 과거 PPI 기반 (M0) | +0.020 |\n| 시장 정보 (M1) | **-0.003** |\n| Event 정보 (ME) | **+0.096** |\n| 시장 + Event (M2) | **+0.068** |\n\n**시장 정보만 쓴 모델은 격차가 사실상 0** 입니다 — 학습에서 보인 만큼 실제로도 맞혔습니다. 반면 **Event 를 포함한 모델만 격차가 큽니다.**\n\n이것이 V1~V6 를 관통하는 답입니다: 공식 Event 정보는 **과거 데이터에 맞출 때는 유용해 보이지만 실제 예측에서는 그 유용성이 재현되지 않습니다.**",
+  "v7_intro_md": "지금까지는 **\"Event 가 다음 달 값을 더 잘 맞히는가\"** 를 물었습니다. V7 은 질문을 바꿉니다 — 경영 현장에서 실제로 필요한 것은 점 하나가 아니라 **얼마나 틀릴 수 있는지**, **급등 위험이 있는지**, **어떤 시장 상황에서 Event 가 더 중요한지**이기 때문입니다.\n\n네 가지를 **결과를 보기 전에** 각각 사전등록했습니다. 후보는 전부 합쳐 **45개**로 제한했고, 새 외부 데이터도 새 사건 기록도 추가하지 않았습니다.",
+  "v7_stop_rule_md": "### 여기서 멈춥니다 — 사전에 정한 중단 규칙\n\nV7 을 시작하기 **전에** 이렇게 적어 두었습니다.\n\n> 1차 가설이 지지되지 않고, 보조 가설에서도 일관된 강한 근거가 나오지 않으면 **Event 모델 개발을 중단한다.** 새 Event feature 도, 새 모형도, 새 사건 기록도 추가하지 않는다.\n\n1차 가설은 지지되지 않았고(p = 0.318), 강한 보조 근거는 **0건**이었습니다. 유의하게 나온 두 결과는 **모두 악화 방향**입니다.\n\n그래서 규칙대로 멈춥니다. 다음 단계는 새 변수가 아니라 **더 긴 Point-in-Time 이력 확보**입니다 — V5 의 난수 실험, V6 의 일반화 격차, V7 의 100% 과대커버가 모두 같은 하나를 가리킵니다: **예측 시점 50개라는 표본 크기.**",
+  "v7_coverage_md": "**목표는 80% 인데 실제로는 100% 를 덮었습니다.**\n\n37개 예측시점 중 실제값이 구간을 벗어난 경우가 **한 번도 없었습니다.** 구간이 정확한 것이 아니라 **너무 넓은 것**입니다.\n\n이유는 분명합니다. 구간의 폭은 **과거 예측오차 분포**에서 나오는데, 그 과거에는 2021~2022년의 격변기가 들어 있고 평가 구간(2023~2025)은 훨씬 잔잔했습니다. 즉 **오차 분포 자체가 시간에 따라 변했습니다.**\n\n이것은 Event 의 문제가 아니라 **표본 구간의 문제**이며, 같은 이유로 급등 사례가 4건밖에 나오지 않아 급등 위험 실험도 판정할 수 없었습니다.",
   "v5_limitation_md": "**가장 큰 제약은 여전히 표본 크기이며, V5 는 그 제약의 구체적 형태를 처음 드러냈습니다.**\n\n예측시점마다 후보가 수백~수천 개인데 내부 검증에 쓸 수 있는 달은 36개뿐입니다. 난수 실험 결과, **예측 대상과 아무 관계가 없는 잡음조차** 내부 검증 오차를 중앙값 1.6%(시장) / 5.6%(Event) 개선했습니다.\n\n즉 이 규모에서는 **모델 선택 자체가 과적합의 주된 원천**입니다. 그래서 12% 문턱을 두었고, 그 문턱이 다시 진짜 시장 신호도 일부 막았습니다. **새 변수가 아니라 더 긴 과거 이력만이 이 딜레마를 풉니다.**",
   "result_reading_md": "**결과를 그대로 보고합니다.** 시장 정보를 더한 M1 도, 공식 사건 정보를 더한 M2 계열도, 단계 보정 구조의 M1-R·M2-R 도 **M0 를 개선하지 못했습니다.** 이 조건에서 가장 정확한 것은 여전히 과거 PPI 이력만 쓰는 M0 입니다. **\"유의하지 않음\"과 \"효과 없음\"은 다릅니다** — 예측 시점 50개로는 검정력이 제한적입니다.",
   "v4_architecture_md": "**V4 는 정보를 한꺼번에 넣지 않고 층으로 쌓습니다.**\n\n- **M0** — 과거 PPI 이력만으로 예측합니다.\n- **M1-R** — M0 가 설명하지 못한 부분을 기존 시장·산업 정보로 보정합니다.\n- **M2-R** — M1-R 이 설명하지 못한 부분을 공식 Event 정보로 보정합니다.\n\n이 구조에서는 **`M2-R − M1-R` 이 정확히 Event 보정폭**입니다. 이전(V3)처럼 변수를 추가하는 순간 규제 강도가 재선택되고 전체 계수가 다시 적합되어 효과가 섞이는 일이 **구조적으로 일어날 수 없습니다.**",
