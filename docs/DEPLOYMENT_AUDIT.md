@@ -1,7 +1,7 @@
 # DEPLOYMENT AUDIT
 
-- 감사 시각(UTC): 2026-08-27T00:14:19+00:00
-- 검사 파일 수: 52
+- 감사 시각(UTC): 2026-08-27T13:30:18+00:00
+- 검사 파일 수: 62
 - 문제: **0건**
 
 > 배포된 앱이 공개로 보일 수 있다고 가정하고 **PUBLIC-SAFE 기준**으로 감사한다.
@@ -52,6 +52,14 @@
 - `data/demo_v7_conditional_by_origin.csv`
 - `data/demo_v7_metrics.csv`
 - `data/demo_v7_risk_by_origin.csv`
+- `data/demo_v8_change_dynamics.csv`
+- `data/demo_v8_comparisons.csv`
+- `data/demo_v8_core_comparison.csv`
+- `data/demo_v8_metrics.csv`
+- `data/demo_v8_pit_feasibility.csv`
+- `data/demo_v8_predictions.csv`
+- `data/demo_v8_rescue.csv`
+- `data/demo_v8_shock_cases.csv`
 - `data/event_channel_panel_v5.csv`
 - `data/event_contribution_v3.csv`
 - `data/event_episode_registry_v3.csv`
@@ -62,6 +70,7 @@
 - `data/predictions.csv`
 - `data/run_metadata.json`
 - `data/x_feature_registry.csv`
+- `docs/data_expansion_v8.md`
 - `docs/event_method.md`
 - `docs/event_method_v3.md`
 - `docs/executive_summary.md`
@@ -70,6 +79,7 @@
 - `docs/findings_v5.md`
 - `docs/findings_v6.md`
 - `docs/findings_v7.md`
+- `docs/findings_v8.md`
 - `docs/methodology_summary.md`
 - `docs/next_phase_plan.md`
 - `README.md`

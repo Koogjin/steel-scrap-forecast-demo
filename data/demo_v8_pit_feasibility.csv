@@ -1,0 +1,8 @@
+series_id,role,source_org,source_product,current_pit_start_observation_month,current_pit_end_observation_month,current_n_observation_months,current_n_releases,license_reuse_status,blocker,verdict
+WPU1012,target,BLS,PPI Detailed Report,2014-09,2026-01,137,130,PASS (BLS public domain),존재 확인 probe 가 HTTP 403. 동결 정책상 재시도·우회 금지라 2015-01 이전 문서의 존재를 확인도 반증도 못 했다,REVIEW
+WPU1017,market_x,BLS,PPI Detailed Report,2014-09,2026-01,137,130,PASS (BLS public domain),존재 확인 probe 가 HTTP 403. 동결 정책상 재시도·우회 금지라 2015-01 이전 문서의 존재를 확인도 반증도 못 했다,REVIEW
+WPU0542,market_x,BLS,PPI Detailed Report,2014-09,2026-01,137,130,PASS (BLS public domain),존재 확인 probe 가 HTTP 403. 동결 정책상 재시도·우회 금지라 2015-01 이전 문서의 존재를 확인도 반증도 못 했다,REVIEW
+AWHMAN,market_x,BLS,Employment Situation,2013-12,2026-07,152,139,PASS (BLS public domain),아카이브 색인 페이지 HTTP 403 (discovery 엔드포인트 차단 패턴),REVIEW
+INDPRO,market_x,Fed,G.17,2014-04,2026-07,148,137,PASS (Fed Board public domain),없음 — 경로가 열려 있다,PASS
+IPG331S,market_x,Fed,G.17,2014-04,2026-07,148,137,PASS (Fed Board public domain),없음 — 경로가 열려 있다,PASS
+CAPUTLG331S,market_x,Fed,G.17,2014-07,2026-07,145,137,PASS (Fed Board public domain),없음 — 경로가 열려 있다,PASS

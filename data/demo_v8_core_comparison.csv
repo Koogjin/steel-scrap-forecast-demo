@@ -1,0 +1,5 @@
+core,n_x,x_series,x_common_start,target_start,common_support_start,binding,gain_months_vs_current,selection_basis
+CURRENT_CORE,6,WPU1017|WPU0542|AWHMAN|INDPRO|IPG331S|CAPUTLG331S,2014-09,2014-09,2014-09,WPU1012|WPU1017|WPU0542,0,현행
+DROP_BLS_PPI_X,4,AWHMAN|INDPRO|IPG331S|CAPUTLG331S,2014-07,2014-09,2014-09,WPU1012,0,historical_reconstructability_only
+FED_G17_ONLY,3,INDPRO|IPG331S|CAPUTLG331S,2014-07,2014-09,2014-09,WPU1012,0,historical_reconstructability_only
+LONGEST_SINGLE_X,1,AWHMAN,2013-12,2014-09,2014-09,WPU1012,0,historical_reconstructability_only

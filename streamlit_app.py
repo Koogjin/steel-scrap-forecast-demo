@@ -92,6 +92,13 @@ def load():
         ("v7_cmp", "demo_v7_comparisons.csv"),
         ("v7_risk", "demo_v7_risk_by_origin.csv"),
         ("v7_cond", "demo_v7_conditional_by_origin.csv"),
+        ("v8_metrics", "demo_v8_metrics.csv"),
+        ("v8_rescue", "demo_v8_rescue.csv"),
+        ("v8_cmp", "demo_v8_comparisons.csv"),
+        ("v8_pred", "demo_v8_predictions.csv"),
+        ("v8_cases", "demo_v8_shock_cases.csv"),
+        ("v8_feas", "demo_v8_pit_feasibility.csv"),
+        ("v8_core", "demo_v8_core_comparison.csv"),
         ("x_registry", "x_feature_registry.csv"),
         ("official_metrics", "metrics.csv"),
         ("v3_metrics", "demo_v3_metrics.csv"),
@@ -114,6 +121,7 @@ v3 = meta["demo_v3"]
 v5 = meta["demo_v5"]
 v6 = meta["demo_v6"]
 v7 = meta["demo_v7"]
+v8 = meta["demo_v8"]
 #: §31 — 상태 라벨의 단일 출처. export 단계에서 지표 방향을 적용해 만든 값이다.
 EXEC_V = v6["exec_verdicts"]
 OPS = v5["operational"]
@@ -931,6 +939,245 @@ with tabs[2]:
             "**하나도 숨기지 않았습니다.** 차이의 부호는 지표마다 의미가 다르므로 "
             "카드의 판정을 함께 보십시오.")
 
+    # =======================================================================
+    # §PART L — V8: Event 가 기존 모델의 오판을 뒤집을 수 있는가
+    #
+    # 새 최상위 탭을 만들지 않는다. Event Intelligence 안의 한 섹션이다.
+    # 카드의 상태 라벨은 손으로 적지 않는다 — export 의 지표 방향 판정기가 만든다.
+    # =======================================================================
+    st.divider()
+    st.markdown("### Event가 기존 모델의 오판을 뒤집을 수 있는가?")
+    st.markdown(meta["v8_intro_md"])
+
+    a8 = v8["alignment"]
+    ac = st.columns(4)
+    ac[0].metric("정렬 검사", f"{a8['problems']}건 문제",
+                 help=f"{a8['n_origins']}개 예측시점 × {a8['checks_per_origin']}가지 검사")
+    ac[1].metric("실현된 급변", f"{v8['n_shock']} / {v8['n_origins']}")
+    ac[2].metric("게이트가 열린 시점", f"{v8['gate']['n_gate_open']} / {v8['n_origins']}",
+                 help="열림 정도 0.5 초과. 한 번도 열리지 않았습니다")
+    ac[3].metric("후보 총량", f"{v8['total_candidate_count']}개",
+                 help="V5 246 · V6 63 · V7 45 → V8 18")
+
+    vcards = st.columns(4)
+    for col, card in zip(vcards, v8["cards"]):
+        v = card["verdict"]
+        p = card.get("p_value")
+        pstr = (f"<br><span style='font-size:11.5px;color:#9CA3AF'>"
+                f"{_pfmt(p)}</span>" if p is not None else "")
+        ds = card.get("dir_shock")
+        dstr = (f"<br><span style='font-size:11.5px;color:#9CA3AF'>"
+                f"급변 방향 {ds:.3f}</span>" if ds is not None else "")
+        col.markdown(
+            f"<div style='background:#F8FAFC;border:1px solid #E2E8F0;"
+            f"border-left:5px solid {VCOLOR[v]};border-radius:8px;padding:14px;"
+            f"height:100%'>"
+            f"<span style='font-size:12.5px;color:#6B7280'>{card['label']}</span>"
+            f"<br><b style='font-size:20px;color:{VCOLOR[v]}'>{v}</b>"
+            f"<br><span style='font-size:12.5px;color:#374151'>"
+            f"{card['detail']}</span>"
+            f"<br><span style='font-size:11.5px;color:#9CA3AF'>"
+            f"{card['metric_label']}</span>{pstr}{dstr}</div>",
+            unsafe_allow_html=True)
+    st.caption(
+        "네 카드 모두 **M1\\* 대비 전체 MAE** 로 판정했습니다. 상태 라벨은 지표 "
+        "방향 판정기가 만들며 화면에서 손으로 적은 것은 하나도 없습니다. "
+        "**MAE 가 낮아진 카드라도 급변 방향 적중률을 함께 보십시오** — 이 연구의 "
+        "질문은 평균 오차가 아니라 **급변에서의 판단**입니다.")
+
+    v8_view = st.radio(
+        "어떤 관점을 볼까요?",
+        ["Shock Audit", "Independent Signals", "Shock Rescue", "DS Challenge"],
+        index=0, horizontal=True, key="v8_view")
+
+    v8m = D["v8_metrics"].set_index("model")
+    v8rc = D["v8_rescue"].set_index("candidate")
+    v8p = D["v8_pred"].copy()
+    v8p["month_dt"] = pd.to_datetime(v8p["target_month"] + "-01")
+    LB = v8["labels"]
+
+    # ================= Shock Audit =====================================
+    if v8_view == "Shock Audit":
+        st.markdown("#### 실제 급변 전에 Event 정보가 존재했는가")
+        st.markdown(meta["v8_shock_audit_md"])
+        cc = v8["case_counts"]
+        cl = v8["case_labels"]
+        order = ["A", "B", "C", "D"]
+        colors = {"A": "#059669", "B": "#DC2626", "C": "#F59E0B", "D": "#9CA3AF"}
+        fig = go.Figure()
+        for k in order:
+            fig.add_bar(x=[f"{k}"], y=[cc.get(k, 0)], name=cl[k],
+                        marker_color=colors[k], text=[cc.get(k, 0)],
+                        textposition="outside", textfont=dict(size=14))
+        show(finish(
+            fig, question="Q. 실제 급변 전에 모델이 쓸 수 있는 Event 정보가 있었는가?",
+            title="급변 8건 중 6건에는 사전 Event 정보가 있었다  "
+                  "<span style='font-size:13px;color:#6B7280'>"
+                  "다만 신호가 뜬 20개월 중 14개월은 아무 일도 없었다</span>",
+            ylab="예측시점 수", xlab="사례 구분",
+            footnote=f"급변 정의: 학습 구간 분위수 {v8['shock_quantile']:.0%} "
+                     f"(결과를 보기 전에 고정)  ·  {FOOT_TARGET}",
+            height=440))
+        st.dataframe(pd.DataFrame([
+            {"사례": k, "정의": cl[k], "건수": cc.get(k, 0)} for k in order]),
+            hide_index=True, width="stretch")
+        takeaway(
+            f"급변 {cc['A'] + cc['B']}건 중 <b>{cc['A']}건</b>에는 예측 시점에 이미 "
+            "Event 신호가 있었습니다. <b>\"정보가 없었다\"는 변명은 성립하지 "
+            "않습니다.</b> 그러나 신호가 뜬 "
+            f"{cc['A'] + cc['C']}개월 중 <b>{cc['C']}개월은 아무 일도 "
+            "일어나지 않았습니다.")
+        reading_guide(
+            "A 는 구제 가능성이 있었던 달, B 는 Event 가 쓸 정보가 없었던 달, "
+            "C 는 오경보 후보입니다.",
+            "A 가 6건으로 B(2건)보다 많습니다 — 정보는 있었습니다.",
+            "C 가 14건입니다. **신호가 있다고 급변이 오지는 않습니다** — "
+            "신호 대비 적중률은 30%로 기저(16%)의 두 배지만 여전히 낮습니다.")
+
+    # ================= Independent Signals =============================
+    elif v8_view == "Independent Signals":
+        st.markdown("#### 가격이력 없이 독립적으로 판단할 수 있는가")
+        st.caption(
+            "아래 세 모델은 **가격이력 블록을 전혀 쓰지 않고** 다음 달 변화량을 "
+            "직접 예측합니다. 마지막 가용 관측치는 변화량을 수준으로 되돌리는 "
+            "산술 상수일 뿐 모델 입력이 아닙니다.")
+        order = ["N0", "M0", "M1_star", "M1_X", "M2_E", "M2_XE"]
+        cmap = {"N0": "#9CA3AF", "M0": "#2563EB", "M1_star": "#0D9488",
+                "M1_X": "#7C3AED", "M2_E": "#F59E0B", "M2_XE": "#DB2777"}
+        fig = go.Figure()
+        fig.add_bar(x=[LB[m] for m in order],
+                    y=[float(v8m.loc[m, "mae_all"]) for m in order],
+                    name="전체 50개월", marker_color=[cmap[m] for m in order],
+                    text=[f"{float(v8m.loc[m, 'mae_all']):.1f}" for m in order],
+                    textposition="outside", showlegend=False)
+        show(finish(
+            fig, question="Q. 가격이력 없이 시장·Event 만으로 판단할 수 있는가?",
+            title="독립 모델 셋 모두 기존 시장 모델을 넘지 못했다  "
+                  "<span style='font-size:13px;color:#6B7280'>"
+                  "MAE ↓ 낮을수록 정확</span>",
+            ylab="평균 예측오차 MAE (지수 Point)", xlab="",
+            footnote=FOOT_TARGET, height=460, legend=False))
+
+        st.markdown("##### 급변 8개월만 따로 보면 — 여기가 결정적입니다")
+        fig2 = go.Figure()
+        fig2.add_bar(x=[LB[m] for m in order],
+                     y=[float(v8m.loc[m, "direction_accuracy_shock"])
+                        for m in order],
+                     marker_color=[cmap[m] for m in order],
+                     text=[f"{float(v8m.loc[m, 'direction_accuracy_shock']):.3f}"
+                           for m in order],
+                     textposition="outside", showlegend=False)
+        fig2.add_hline(y=0.5, line=dict(color="#9CA3AF", width=1.4, dash="dash"))
+        fig2.add_annotation(xref="paper", x=0.99, y=0.5, xanchor="right",
+                            text="동전 던지기 0.50", showarrow=False, yshift=11,
+                            font=dict(size=11, color="#6B7280"))
+        show(finish(
+            fig2, question="Q. 급변이 실제로 일어난 달에 방향을 맞혔는가?",
+            title="Event 만 쓴 모델은 급변 8개월의 방향을 8번 다 틀렸다  "
+                  "<span style='font-size:13px;color:#6B7280'>"
+                  "방향 적중률 ↑ 높을수록 정확</span>",
+            ylab="급변월 방향 적중률", xlab="",
+            footnote=f"급변 {v8['n_shock']}개월만 대상 — 표본이 작습니다  ·  "
+                     f"{FOOT_TARGET}",
+            height=440, legend=False))
+        takeaway(
+            "급변 구간에서 가장 정확한 것은 여전히 <b>과거 PPI 기반 모델</b>이고, "
+            "<b>직전 가용치를 그대로 쓰는 것조차 시장 모델을 이깁니다.</b> "
+            "Event 만 쓴 모델은 <b>8번 다 틀렸습니다(0/8)</b>.")
+        reading_guide(
+            "위 그림은 전체 50개월 평균 오차, 아래 그림은 급변 8개월의 방향 "
+            "적중률입니다.",
+            "독립 모델 셋 다 기존 모델을 넘지 못했고, 급변에서는 더 나빠집니다.",
+            "**급변이 8개월뿐입니다.** 이 수치는 몇 건이 바뀌면 크게 흔들리며 "
+            "유의성을 주장하지 않습니다.")
+
+    # ================= Shock Rescue (flagship) =========================
+    elif v8_view == "Shock Rescue":
+        st.markdown("#### Event가 기본 모델의 잘못된 판단을 얼마나 구제했는가")
+        st.markdown(meta["v8_rescue_md"])
+        cands = ["M1_X", "M2_E", "M2_XE", "M2_Gate"]
+        rr = [float(v8rc.loc[c, "rescue_rate"]) for c in cands]
+        fo = [float(v8rc.loc[c, "false_override_rate"]) for c in cands]
+        fig = go.Figure()
+        fig.add_bar(x=[LB[c] for c in cands], y=rr,
+                    name="구제 — 기본 모델이 틀렸을 때 바로잡음",
+                    marker_color="#059669",
+                    text=[f"{v:.3f}" for v in rr], textposition="outside")
+        fig.add_bar(x=[LB[c] for c in cands], y=fo,
+                    name="잘못된 뒤집기 — 맞은 것을 틀리게 바꿈",
+                    marker_color="#DC2626",
+                    text=[f"{v:.3f}" for v in fo], textposition="outside")
+        fig.update_layout(barmode="group")
+        show(finish(
+            fig, question="Q. Event가 기본 모델의 잘못된 판단을 얼마나 구제했는가?",
+            title="구제한 만큼 잘못 뒤집었다  "
+                  "<span style='font-size:13px;color:#6B7280'>"
+                  "초록 ↑ 높을수록 좋음 · 빨강 ↓ 낮을수록 좋음</span>",
+            ylab="비율", xlab="",
+            footnote=f"기본 모델 = M1*  ·  방향 오답 20건 / 정답 30건  ·  "
+                     f"{FOOT_TARGET}",
+            height=470))
+
+        st.markdown("##### 실질적으로 이탈했을 때 그 이탈이 도움이 됐는가")
+        prec = [(c, v8rc.loc[c, "rescue_precision"],
+                 int(v8rc.loc[c, "substantial_departures"])) for c in cands]
+        st.dataframe(pd.DataFrame([
+            {"후보": LB[c], "이탈 정확도": ("—" if pd.isna(p) else f"{float(p):.3f}"),
+             "실질 이탈 건수": n,
+             "해석": ("표본 부족" if n < 5 else
+                    ("이탈의 절반 이상이 악화" if float(p) < 0.5 else "이탈이 유익"))}
+            for c, p, n in prec]), hide_index=True, width="stretch")
+        takeaway(
+            "구제율이 가장 높은 <b>시장만 독립</b> 모델이 동시에 <b>잘못된 뒤집기도 "
+            "가장 많습니다</b>(13건 구제 vs 14건 오작동 — 순효과 음수). "
+            "이탈 정확도가 <b>0.385~0.429</b> 라는 것은 기존 모델에서 벗어난 "
+            "경우의 <b>60% 이상이 오히려 나빠졌다</b>는 뜻입니다.")
+
+        st.divider()
+        st.markdown(meta["v8_gate_md"])
+        gcase = ["A", "B", "C", "D"]
+        gv = [v8["gate"][f"mean_case_{k}"] for k in gcase]
+        fig3 = go.Figure()
+        fig3.add_bar(x=[f"{k} — {v8['case_labels'][k]}" for k in gcase], y=gv,
+                     marker_color=["#059669", "#DC2626", "#F59E0B", "#9CA3AF"],
+                     text=[f"{v:.3f}" for v in gv], textposition="outside",
+                     showlegend=False)
+        fig3.add_hline(y=0.5, line=dict(color="#DC2626", width=1.4, dash="dash"))
+        fig3.add_annotation(xref="paper", x=0.99, y=0.5, xanchor="right",
+                            text="게이트가 열리는 문턱 0.50", showarrow=False,
+                            yshift=11, font=dict(size=11, color="#DC2626"))
+        show(finish(
+            fig3, question="Q. 게이트가 진짜 급변에서 더 열렸는가?",
+            title="게이트는 진짜 급변에서 오히려 가장 덜 열렸다  "
+                  "<span style='font-size:13px;color:#6B7280'>"
+                  "평균 열림 정도 · 0.50 을 넘어야 전문가로 전환된다</span>",
+            ylab="평균 열림 정도 (0~1)", xlab="",
+            footnote=f"50개 예측시점 전부에서 0.5 미만  ·  {FOOT_EVENT}",
+            height=460, legend=False, yrange=[0, 0.6]))
+        st.markdown(meta["v8_ensemble_caveat_md"])
+
+    # ================= DS Challenge ====================================
+    else:
+        st.markdown("#### Data Scientist Challenge")
+        ds = v8["ds_challenge"]
+        c = st.columns(3)
+        c[0].metric("제안", f"{ds['reviewed']}건")
+        c[1].metric("QA 승인", f"{ds['approved']}건")
+        r8 = ds.get("result") or {}
+        c[2].metric("재보정이 선택된 시점",
+                    f"{r8.get('n_applied', 0)} / {v8['n_origins']}",
+                    help="나머지는 절차가 스스로 기존 모델을 골랐습니다")
+        st.dataframe(pd.DataFrame([
+            {"제안": x["name"], "슬롯": x["slot"],
+             "QA 판정": ("승인" if x["decision"] == "APPROVED" else "기각"),
+             "조건": x["n_conditions"] if x["decision"] == "APPROVED" else "—",
+             "사유": x["rationale"][:110] + "…"}
+            for x in ds["candidates"]]), hide_index=True, width="stretch")
+        st.markdown(meta["v8_ds_md"])
+        st.caption(
+            "기술적 상세는 `연구 과정 (Research Archive)` 탭에 있습니다. "
+            "**DS 후보로 기존 M1/M2 를 대체하지 않았습니다** — 나란히 놓고 볼 뿐입니다.")
+
 
     # ---- 1. PEP / NEP --------------------------------------------------
     st.divider()
@@ -1164,12 +1411,14 @@ with tabs[4]:
     section = st.selectbox(
         "보고 싶은 항목", [
             "A. 공식 사전등록 실험 (N0 / M0 / M1)",
-            "B. Event 연구 발전 과정 (V1 → V7)",
+            "B. Event 연구 발전 과정 (V1 → V8)",
             "C. V5 통제 실험 (2×2)",
             "D. 진단 결과",
             "E. V7 위험·조건부 가치 실험 (전체 비교)",
-            "F. 전체 Metrics Table",
-            "G. 방법론 · 산출물",
+            "F. V8 독립 신호 · 충격 구제 (전체 비교)",
+            "G. V8 데이터 확장 타당성",
+            "H. 전체 Metrics Table",
+            "I. 방법론 · 산출물",
         ])
 
     if section.startswith("A"):
@@ -1328,6 +1577,146 @@ with tabs[4]:
             "steel_scrap_v7_risk_by_origin.csv", "text/csv")
 
     elif section.startswith("F"):
+        st.markdown(
+            "**V8 은 정확도가 아니라 구조를 물었습니다** — 가격이력에 종속되지 않은 "
+            "독립 판단, 그리고 Event 가 기존 모델의 오판을 뒤집을 수 있는가. "
+            "모든 모델과 모든 비교를 **하나도 빠짐없이** 싣습니다.")
+        vm8 = D["v8_metrics"].copy()
+        vm8["모델"] = vm8["model"].map(lambda m: v8["labels"].get(m, m))
+        st.dataframe(
+            vm8[["모델", "n", "mae_all", "mae_shock", "mae_normal",
+                 "n_shock", "direction_accuracy", "direction_accuracy_shock"]]
+            .rename(columns={"n": "시점 수", "mae_all": "MAE 전체 ↓",
+                             "mae_shock": "MAE 급변 ↓",
+                             "mae_normal": "MAE 평상 ↓", "n_shock": "급변 수",
+                             "direction_accuracy": "방향 ↑",
+                             "direction_accuracy_shock": "급변 방향 ↑"})
+            .style.format({"MAE 전체 ↓": "{:.2f}", "MAE 급변 ↓": "{:.2f}",
+                           "MAE 평상 ↓": "{:.2f}", "방향 ↑": "{:.3f}",
+                           "급변 방향 ↑": "{:.3f}"}),
+            hide_index=True, width="stretch")
+
+        st.markdown("##### 구제 지표 전체")
+        vr8 = D["v8_rescue"].copy()
+        vr8["후보"] = vr8["candidate"].map(lambda m: v8["labels"].get(m, m))
+        st.dataframe(
+            vr8[["후보", "rescue_rate", "rescues", "base_wrong_cases",
+                 "false_override_rate", "false_overrides", "base_correct_cases",
+                 "rescue_precision", "substantial_departures"]]
+            .rename(columns={"rescue_rate": "구제율 ↑", "rescues": "구제",
+                             "base_wrong_cases": "기본 오답",
+                             "false_override_rate": "잘못된 뒤집기 ↓",
+                             "false_overrides": "오작동",
+                             "base_correct_cases": "기본 정답",
+                             "rescue_precision": "이탈 정확도 ↑",
+                             "substantial_departures": "실질 이탈"}),
+            hide_index=True, width="stretch")
+
+        st.markdown("##### 유의성 — 급변 구간은 계산하지 않습니다")
+        vc8 = D["v8_cmp"].copy()
+        vc8["비교"] = vc8["test"].map(lambda m: v8["labels"].get(m, m))
+        st.dataframe(
+            vc8[["비교", "scope", "diff", "p_value", "inference", "support"]]
+            .rename(columns={"scope": "범위", "diff": "MAE 차이",
+                             "p_value": "p", "inference": "추론 상태",
+                             "support": "비고"}),
+            hide_index=True, width="stretch")
+        st.warning(
+            "급변이 **8개월**뿐이라 사용하는 통계 절차(블록 길이 12)가 "
+            "**퇴화합니다** — 모든 재표본이 원본과 같아져 p 값이 0 또는 1 로 "
+            "붕괴합니다. 그것은 유의성이 아니라 계산 붕괴이므로 "
+            "`INVALID_MBB_DEGENERATE` 로 표시하고 수치를 내지 않습니다. "
+            "**블록 길이를 줄여 \"돌아가게\" 만들지 않았습니다** — 그것은 결과를 "
+            "본 뒤의 조정입니다.")
+        st.download_button(
+            "V8 시점별 원자료 CSV 내려받기",
+            D["v8_pred"].to_csv(index=False).encode("utf-8-sig"),
+            "steel_scrap_v8_by_origin.csv", "text/csv")
+
+    elif section.startswith("G"):
+        st.markdown("#### 표본을 늘릴 수 있는가 (V8 데이터 확장 타당성)")
+        st.info(
+            "**새 데이터는 V8 성능에 전혀 사용하지 않았습니다.** 이 절은 "
+            "\"표본을 늘릴 수 있는가\"에 대한 조사 결과일 뿐입니다.")
+
+        dr = v8["data_rights"]
+        c = st.columns(4)
+        c[0].metric("판정한 소스", f"{dr['total']}개")
+        c[1].metric("통과 (PASS)", f"{dr['pass']}개")
+        c[2].metric("보류 (REVIEW)", f"{dr['review']}개",
+                    help="모델링 목적에서 배제와 동일하게 취급합니다")
+        c[3].metric("배제 (REJECT)", f"{dr['reject']}개")
+        st.caption(
+            f"**V8 모델링에 쓴 {dr['used_in_modeling']}종은 전부 통과 등급이며, "
+            "새로 들어간 소스는 0건입니다.** 재사용 권리가 불분명하면 쓰지 "
+            "않습니다 — 성능이 이 규칙을 뒤집지 못합니다.")
+
+        st.markdown("##### 시장 변수를 버려서 창을 늘릴 수 있을까")
+        st.markdown(meta["v8_expansion_md"])
+        cc = pd.DataFrame(v8["expansion"]["core_comparison"])
+        cc["구성"] = cc["core"].map({
+            "CURRENT_CORE": "현행 (시장 변수 6)",
+            "DROP_BLS_PPI_X": "BLS PPI 계열 제외 (4)",
+            "FED_G17_ONLY": "연준 계열만 (3)",
+            "LONGEST_SINGLE_X": "가장 긴 변수 1개만"})
+        st.dataframe(
+            cc[["구성", "n_x", "x_start", "common_start", "gain_months"]]
+            .rename(columns={"n_x": "시장 변수 수", "x_start": "시장 공통 시작",
+                             "common_start": "전체 공통 시작",
+                             "gain_months": "이득(개월)"}),
+            hide_index=True, width="stretch")
+
+        st.markdown("##### 늘렸다면 얼마나 좋아졌을까 (계획값 — 실측 아님)")
+        pj = pd.DataFrame(v8["expansion"]["projection"])
+        fig = go.Figure()
+        fig.add_bar(x=pj["shift"], y=pj["origins"], name="예측시점",
+                    marker_color="#0D9488",
+                    text=pj["origins"], textposition="outside")
+        fig.add_bar(x=pj["shift"], y=pj["shocks"], name="급변 사례",
+                    marker_color="#DC2626",
+                    text=pj["shocks"], textposition="outside")
+        fig.update_layout(barmode="group")
+        show(finish(
+            fig, question="Q. 과거 이력을 늘리면 표본이 얼마나 늘어나는가?",
+            title="3년을 늘려도 급변은 14개월  "
+                  "<span style='font-size:13px;color:#6B7280'>"
+                  "취득 가능성을 확인하기 전에는 계획값입니다</span>",
+            ylab="개수", xlab="예측 대상 시작을 앞당기는 정도",
+            footnote="규칙 산술로 계산한 계획값 — 실측이 아닙니다  ·  "
+                     + FOOT_TARGET,
+            height=430))
+        takeaway(
+            "V8 의 핵심 질문이 <b>급변 8개월</b>에 걸려 있습니다. 3년을 늘려도 "
+            "14개월입니다 — 이 트랙이 왜 중요한지, 그리고 왜 3년으로도 충분하지 "
+            "않을지를 동시에 보여 줍니다.")
+
+        with st.expander("계열별 확장 판정"):
+            fe = pd.DataFrame(v8["expansion"]["feasibility"])
+            st.dataframe(
+                fe.rename(columns={"series": "계열", "role": "역할",
+                                   "org": "원기관", "start": "관측 시작",
+                                   "months": "개월", "verdict": "판정"}),
+                hide_index=True, width="stretch")
+
+        with st.expander("주간 데이터로 표본을 4배 만들 수 있을까"):
+            st.markdown(meta["v8_weekly_md"])
+            st.code(
+                "        예측 대상: 월 T 의 철·강 스크랩 PPI" + NL +
+                "                          ↑" + NL +
+                "        ┌─────────┬─────────┬─────────┬─────────┐" + NL +
+                "      4주 전    3주 전    2주 전    1주 전" + NL +
+                "       최초      갱신      갱신      갱신",
+                language=None)
+
+        with st.expander("데이터 권리 판정 전체"):
+            st.dataframe(
+                pd.DataFrame(dr["rows"]).rename(
+                    columns={"name": "데이터셋", "org": "기관",
+                             "status": "판정", "used": "V8 사용",
+                             "free": "무료", "checked": "확인일"}),
+                hide_index=True, width="stretch")
+
+    elif section.startswith("H"):
         st.markdown("모든 실험의 전체 지표입니다. **하나도 삭제되지 않았습니다.**")
         vm = D["v5_metrics"].copy()
         vm["모델"] = vm["model"].map(lambda m: LABEL.get(m, m))
@@ -1359,6 +1748,14 @@ with tabs[4]:
             f"**{'예' if v7['new_event_records_added'] else '아니오'}**\n"
             f"- V7 중단 규칙 발동: "
             f"**{'예' if v7['stop_rule_triggered'] else '아니오'}**\n"
+            f"- V8 방법론 동결본: `{v8['freeze_version']}` "
+            "(예측 결과를 보기 **전에** 커밋)\n"
+            f"- V8 연구 지위: **탐색적 구조 연구** "
+            "(이미 관측된 구간에서 동기를 얻었으므로 확증 근거가 아님)\n"
+            f"- V8 확장 데이터 성능 사용: "
+            f"**{'예' if v8['expanded_pit_data_used'] else '아니오'}**\n"
+            f"- V8 주간 데이터 성능 사용: "
+            f"**{'예' if v8['weekly_data_used'] else '아니오'}**\n"
             f"- 새 외부 데이터 추가: **{'예' if v5['new_raw_x_added'] else '아니오'}**\n"
             f"- 공식 사건 기록 변경: "
             f"**{'예' if v5['event_registry_changed'] else '아니오'}**\n"
@@ -1368,6 +1765,8 @@ with tabs[4]:
         st.markdown("#### 동봉 문서")
         for label, path in (("경영진 요약", "docs/executive_summary.md"),
                             ("방법론 요약", "docs/methodology_summary.md"),
+                            ("V8 결과와 해석", "docs/findings_v8.md"),
+                            ("V8 데이터 확장 타당성", "docs/data_expansion_v8.md"),
                             ("V7 결과와 해석", "docs/findings_v7.md"),
                             ("다음 단계 계획", "docs/next_phase_plan.md"),
                             ("V6 결과와 해석", "docs/findings_v6.md"),
@@ -1384,5 +1783,5 @@ st.caption(
     f"사전등록 해시 `{meta['preregistration_sha256'][:12]}` · "
     f"V3 registry `{v3['registry_version']}` · "
     f"V5 동결 `{v5['freeze_version']}` · V7 동결 `{v7['freeze_version']}` · "
-    f"생성 {meta['exported_at']}"
+    f"V8 동결 `{v8['freeze_version']}` · 생성 {meta['exported_at']}"
 )

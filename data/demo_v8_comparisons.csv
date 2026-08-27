@@ -1,0 +1,14 @@
+base,test,scope,metric,diff,mean_d,p_value,ci_low,ci_high,inference,inference_note,status,support
+M1_star,M1_X,all,mae,1.653812,-1.653812,0.7769,-11.86259,11.68327,MBB_OK,,EXPLORATORY_DEMO_V8,
+M1_star,M1_X,shock,mae,-4.3366,4.3366,,,,INVALID_MBB_DEGENERATE,n=8 <= 2 x block(12) — 이동블록 부트스트랩이 퇴화한다. 수치를 내지 않는다.,EXPLORATORY_DEMO_V8,SMALL_SAMPLE
+M1_star,M2_E,all,mae,1.343535,-1.343535,0.56545,-5.279514,3.78589,MBB_OK,,EXPLORATORY_DEMO_V8,
+M1_star,M2_E,shock,mae,3.219103,-3.219103,,,,INVALID_MBB_DEGENERATE,n=8 <= 2 x block(12) — 이동블록 부트스트랩이 퇴화한다. 수치를 내지 않는다.,EXPLORATORY_DEMO_V8,SMALL_SAMPLE
+M1_star,M2_XE,all,mae,2.508895,-2.508895,0.54705,-8.72916,6.344177,MBB_OK,,EXPLORATORY_DEMO_V8,
+M1_star,M2_XE,shock,mae,-3.332222,3.332222,,,,INVALID_MBB_DEGENERATE,n=8 <= 2 x block(12) — 이동블록 부트스트랩이 퇴화한다. 수치를 내지 않는다.,EXPLORATORY_DEMO_V8,SMALL_SAMPLE
+M1_star,M2_Gate,all,mae,-2.065487,2.065487,0.11615,0.340222,5.449896,MBB_OK,,EXPLORATORY_DEMO_V8,
+M1_star,M2_Gate,shock,mae,-1.750746,1.750746,,,,INVALID_MBB_DEGENERATE,n=8 <= 2 x block(12) — 이동블록 부트스트랩이 퇴화한다. 수치를 내지 않는다.,EXPLORATORY_DEMO_V8,SMALL_SAMPLE
+M1_star,M1_Gate,all,mae,-0.549346,0.549346,0.7053,-1.828537,3.647309,MBB_OK,,EXPLORATORY_DEMO_V8,
+M1_star,M1_Gate,shock,mae,-1.898081,1.898081,,,,INVALID_MBB_DEGENERATE,n=8 <= 2 x block(12) — 이동블록 부트스트랩이 퇴화한다. 수치를 내지 않는다.,EXPLORATORY_DEMO_V8,SMALL_SAMPLE
+M1_star,M1_DS1,all,mae,0.255226,-0.255226,0.60155,-0.765678,0.0,MBB_OK,,EXPLORATORY_DEMO_V8,
+M1_star,M1_DS1,shock,mae,0.0,0.0,,,,INVALID_MBB_DEGENERATE,n=8 <= 2 x block(12) — 이동블록 부트스트랩이 퇴화한다. 수치를 내지 않는다.,EXPLORATORY_DEMO_V8,SMALL_SAMPLE
+M1_star,M1_DS1,ds1_applied,mae,12.761299,-12.761299,,,,INVALID_MBB_DEGENERATE,n=1 <= 2 x block(12) — 이동블록 부트스트랩이 퇴화한다. 수치를 내지 않는다.,EXPLORATORY_DEMO_V8_DS_CHALLENGE,PRIMARY_SUBSAMPLE_n=1
