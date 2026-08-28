@@ -1,0 +1,8 @@
+source,organization,status,used,free,url,note
+"PPI Detailed Report (2007-01 ~ 2026-01 회차, 로컬 보유분 227건)",U.S. Bureau of Labor Statistics,PASS,True,True,https://www.bls.gov/ppi/detailed-report/,2026-08-28 이 호스트에서 bls.gov 로의 curl 요청은 HTTP 403 이었다. **우회하지 않는다.** V10 은 새 BLS 취득을 필요로 하지 않으므로 이 403 은 V10 을 막지 않는다. 새 회차가 필요해지면 그때 다시 판정한다.
+"Federal Register documents (REST API v1, 메타데이터)",Office of the Federal Register (NARA) / U.S. Government Publishing Office,PASS,True,True,https://www.federalregister.gov/api/v1/documents.json,
+federalregister.gov HTML 페이지 (문서 본문 / reader aids),Office of the Federal Register (NARA),REJECT,False,True,https://www.federalregister.gov/,사이트가 자동화된 HTML 접근을 제한하고 CAPTCHA 를 세운다. 우리 규칙은 CAPTCHA 및 차단 우회를 금지한다. 같은 정보가 **API 로 합법적으로** 제공되므로 HTML 을 쓸 이유도 없다.
+"EIA 주간 석유 재고/공급 계열 (dnav xls, API v2)",U.S. Energy Information Administration,REJECT,False,True,https://www.eia.gov/petroleum/supply/weekly/,"**PIT 불가.** 공개된 주간 파일은 **현재 개정값**만 담고, 과거 vintage(그 주에 실제로 발표됐던 값) 아카이브를 이 경로로 확인하지 못했다. 주간 석유 재고는 실제로 개정된다. 현재값을 과거 시점에 주입하면 look-ahead 다 — 그래서 쓰지 않는다(fail closed). 추가로 API v2 는 key 를 요구해 배포 시 secret 관리 문제가 생긴다."
+Federal Reserve H.15 Selected Interest Rates (Data Download Program CSV),Board of Governors of the Federal Reserve System,REVIEW,False,True,https://www.federalreserve.gov/datadownload/,"**권리가 아니라 사전동결 문제로 배제한다.** 금리는 네 target 중 어느 것에 대해서도 V10 이 **성능을 보기 전에** 동결한 Economic Driver Map 에 들어가 있지 않다. 결과를 보고 나중에 넣으면 그것이 바로 PART J 가 금지하는 성능 추종이다. 41절의 ""적절한 주간 시장 소스가 없으면 억지로 만들지 말라""를 따른다."
+뉴스 기사 코퍼스 / 상용 DB / 뉴스 애그리게이터 / Wikipedia,다양(비정부),REJECT,False,False,,상시 금지. 유료·독점·스크래핑·사후 큐레이션 위험. 모델 입력으로 쓰지 않는다.
+'주요 사건 연표' 류 사후 정리 목록,,REJECT,False,False,,**가장 위험한 소스.** 가격이 움직인 뒤에 사람이 골라 만든 목록이라 정의상 hindsight 가 들어간다. Track A 는 규칙 기반 기계적 편입만 쓴다.

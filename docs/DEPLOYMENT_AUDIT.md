@@ -1,7 +1,7 @@
 # DEPLOYMENT AUDIT
 
-- 감사 시각(UTC): 2026-08-27T15:14:52+00:00
-- 검사 파일 수: 73
+- 감사 시각(UTC): 2026-08-28T16:02:31+00:00
+- 검사 파일 수: 87
 - 문제: **0건**
 
 > 배포된 앱이 공개로 보일 수 있다고 가정하고 **PUBLIC-SAFE 기준**으로 감사한다.
@@ -32,6 +32,18 @@
 - `assets/forecast_actual_vs_pred.png`
 - `assets/model_story.png`
 - `assets/two_by_two.png`
+- `data/demo_v10_cross_metrics.csv`
+- `data/demo_v10_cross_skills.csv`
+- `data/demo_v10_event_by_year.csv`
+- `data/demo_v10_event_composition.csv`
+- `data/demo_v10_rights.csv`
+- `data/demo_v10_scrap_comparisons.csv`
+- `data/demo_v10_scrap_metrics.csv`
+- `data/demo_v10_scrap_predictions.csv`
+- `data/demo_v10_targets.csv`
+- `data/demo_v10_weekly_metrics.csv`
+- `data/demo_v10_weekly_traj_metrics.csv`
+- `data/demo_v10_weekly_trajectory.csv`
 - `data/demo_v3_metrics.csv`
 - `data/demo_v4_comparisons.csv`
 - `data/demo_v4_event_attribution.csv`
@@ -79,11 +91,13 @@
 - `data/pep_nep_v3.csv`
 - `data/predictions.csv`
 - `data/run_metadata.json`
+- `data/v10_metadata.json`
 - `data/x_feature_registry.csv`
 - `docs/data_expansion_v8.md`
 - `docs/event_method.md`
 - `docs/event_method_v3.md`
 - `docs/executive_summary.md`
+- `docs/findings_v10.md`
 - `docs/findings_v3.md`
 - `docs/findings_v4.md`
 - `docs/findings_v5.md`

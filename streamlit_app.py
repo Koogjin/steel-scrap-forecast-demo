@@ -118,8 +118,35 @@ def load():
     return d
 
 
+@st.cache_data
+def load_v10():
+    """V10 자산. 별도 파일로 두어 V1~V9 로딩 경로를 건드리지 않는다."""
+    d = {}
+    for key, name in (
+        ("targets", "demo_v10_targets.csv"),
+        ("rights", "demo_v10_rights.csv"),
+        ("event_year", "demo_v10_event_by_year.csv"),
+        ("event_comp", "demo_v10_event_composition.csv"),
+        ("scrap_metrics", "demo_v10_scrap_metrics.csv"),
+        ("scrap_cmp", "demo_v10_scrap_comparisons.csv"),
+        ("scrap_pred", "demo_v10_scrap_predictions.csv"),
+        ("cross_skills", "demo_v10_cross_skills.csv"),
+        ("cross_metrics", "demo_v10_cross_metrics.csv"),
+    ):
+        d[key] = pd.read_csv(DATA / name)
+    for key, name in (("weekly_metrics", "demo_v10_weekly_metrics.csv"),
+                      ("weekly_traj", "demo_v10_weekly_traj_metrics.csv")):
+        p = DATA / name
+        if p.exists():
+            d[key] = pd.read_csv(p)
+    d["meta"] = json.loads((DATA / "v10_metadata.json").read_text(encoding="utf-8"))
+    return d
+
+
 D = load()
 meta = D["meta"]
+D10 = load_v10()
+V10 = D10["meta"]
 tgt = meta["target"]
 k = meta["kpi"]
 v3 = meta["demo_v3"]
@@ -430,6 +457,107 @@ with tabs[1]:
                "공개되어 있던 값만 사용합니다.")
     st.dataframe(pd.DataFrame(meta["revision_examples"]), hide_index=True,
                  width="stretch")
+
+
+    # =======================================================================
+    # V10 — 데이터 확장 · Target Universe
+    # =======================================================================
+    st.divider()
+    st.subheader("V10 데이터 확장 · Target Universe")
+    st.markdown(
+        "V9 까지 이 프로젝트가 다룬 것은 **철·강 스크랩 하나**였고, Event 이력은 "
+        "**2015-06 이후**만 있었습니다. V10 은 두 축을 동시에 넓혔습니다.")
+
+    eh = V10["event_history"]
+    c = st.columns(4)
+    c[0].metric("Event 최초 시점", eh["earliest_known_at"][:7],
+                delta=f"V9 {eh['v9_earliest_known_at'][:7]} 에서 확장",
+                delta_color="off")
+    c[1].metric("Event 레코드", f"{eh['records']:,}",
+                delta=f"V9 {eh['v9_records']}건", delta_color="off")
+    c[2].metric("Event episode", f"{eh['episodes']:,}",
+                delta=f"V9 {eh['v9_episodes']}개", delta_color="off")
+    c[3].metric("예측 대상 계열", f"{len(V10['cross_target']['targets'])}종",
+                delta="V9 는 1종", delta_color="off")
+
+    st.info(
+        "**네 계열을 모두 같은 문서에서 뽑았습니다.** BLS PPI Detailed Report 라는 "
+        "하나의 공식 간행물, 같은 표, **같은 발표 일정**에서 읽었기 때문에 "
+        "‘어떤 상품만 데이터를 더 빨리 받았다’는 불공정이 구조적으로 생기지 않습니다.")
+
+    st.markdown("#### 편입된 예측 대상과 Target-Specific X")
+    tg = D10["targets"]
+    passed = tg[tg["status"] == "PASS"]
+    st.dataframe(
+        passed[["label", "series_id", "official_name", "role", "x_core",
+                "first_observation_month", "last_observation_month", "months",
+                "gaps", "matched_train_start", "maximum_train_start"]]
+        .rename(columns={
+            "label": "대상", "series_id": "계열 ID", "official_name": "공식 계열명",
+            "role": "역할", "x_core": "Target-Specific X",
+            "first_observation_month": "최초 관측월",
+            "last_observation_month": "최종 관측월", "months": "개월",
+            "gaps": "공백", "matched_train_start": "matched 학습시작",
+            "maximum_train_start": "maximum 학습시작"}),
+        hide_index=True, width="stretch")
+    st.caption(
+        "X 는 상품마다 다르지만 **설계 원리는 같습니다** — "
+        "‘같은 생산사슬의 전방 제품 가격 + 공통 에너지 원가’. "
+        "네 대상이 모두 투입재이기 때문에 성립하는 구조이며, 성능을 보기 전에 "
+        "고정했습니다.")
+
+    rej = tg[tg["status"] != "PASS"]
+    if len(rej):
+        with st.expander(f"검토했지만 쓰지 않은 후보 {len(rej)}건 — 이유"):
+            st.dataframe(
+                rej[["label", "status", "why"]].rename(
+                    columns={"label": "후보", "status": "판정", "why": "이유"}),
+                hide_index=True, width="stretch")
+
+    st.markdown("#### 학습 지지 — 공통 창은 구리가 결정했습니다")
+    ct = V10["cross_target"]
+    fig = go.Figure()
+    labels = [ct["labels"][t] for t in ct["targets"]]
+    matched_n = [next(r["n_train_first"] for r in ct["rows"]
+                      if r["target_id"] == t and r["mode"] == "MATCHED")
+                 for t in ct["targets"]]
+    maximum_n = [next(r["n_train_first"] for r in ct["rows"]
+                      if r["target_id"] == t and r["mode"] == "MAXIMUM")
+                 for t in ct["targets"]]
+    fig.add_bar(x=labels, y=matched_n, name="matched (1차 · 공통)",
+                marker_color="#2563EB",
+                text=[f"{v}" for v in matched_n], textposition="outside")
+    fig.add_bar(x=labels, y=maximum_n, name="maximum (2차 · 각자 최대)",
+                marker_color="#94A3B8",
+                text=[f"{v}" for v in maximum_n], textposition="outside")
+    show(finish(
+        fig, question="Q. 네 대상이 정말 같은 조건에서 비교되었는가?",
+        title="첫 예측시점의 학습 행 수  "
+              "<span style='font-size:13px;color:#6B7280'>matched 에서는 "
+              "네 대상이 모두 같은 86행</span>",
+        ylab="학습 행 수", xlab="", height=400))
+    st.success(
+        f"**1차 비교에서 네 대상의 학습행이 정확히 같습니다({matched_n[0]}행).** "
+        f"공통 학습 시작월 **{ct['matched_train_start']}** 은 "
+        f"**{ct['labels'][ct['binding_target']]}** 의 자료 공백이 결정했고, "
+        "창을 늘리려고 그 대상을 빼지 않았습니다.")
+
+    st.markdown("#### 데이터 권리 — PASS 만 씁니다")
+    rt = V10["rights"]
+    c = st.columns(4)
+    c[0].metric("PASS", rt["pass"])
+    c[1].metric("REVIEW (사용 금지)", rt["review"])
+    c[2].metric("REJECT", rt["reject"])
+    c[3].metric("유료 소스", rt["paid_sources_used"])
+    st.dataframe(
+        D10["rights"].rename(columns={
+            "source": "소스", "organization": "기관", "status": "판정",
+            "used": "사용", "free": "무료", "url": "공식 URL", "note": "비고"}),
+        hide_index=True, width="stretch")
+    st.caption(
+        "REVIEW 는 모델링 목적에서 REJECT 와 **동일하게** 취급합니다. "
+        "Federal Register 는 사이트가 안내한 대로 **공개 API 만** 사용했고 "
+        "HTML 을 긁거나 CAPTCHA 를 우회하지 않았습니다.")
 
 # ===========================================================================
 # 3. EVENT INTELLIGENCE  (§PART L)
@@ -1590,6 +1718,432 @@ with tabs[2]:
     with st.expander("채점 규칙 — 결과를 보기 전에 고정했습니다"):
         st.markdown(meta["event_method_v3_md"])
 
+
+    # =======================================================================
+    # V10 — Event 이력 확장 · 전달 모델 · 교차 target · 주간 nowcast
+    # =======================================================================
+    st.divider()
+    st.subheader("V10 — Event 이력을 2009년까지 늘리고, 전달 구조를 다시 설계했다")
+    st.markdown(
+        "V9 는 Event 실패의 **위치**를 특정했습니다 — 탐지도 타이밍도 표본도 아니고 "
+        "**관련성 정밀도와 전달 특정성**이었습니다. V10 은 그 둘을 정면으로 다룹니다.")
+
+    v10_view = st.radio(
+        "어떤 관점을 볼까요?",
+        ["Event History Expansion", "Transmission Model",
+         "Cross-Target Matched History", "Cross-Target Maximum History",
+         "Full Weekly Rolling Nowcast"],
+        index=0, horizontal=True, key="v10_view")
+
+    CT = V10["cross_target"]
+    TL = CT["labels"]
+
+    # ================= 1. Event History Expansion ======================
+    if v10_view == "Event History Expansion":
+        eh = V10["event_history"]
+        st.markdown("#### 사람이 사건을 고르지 않았습니다")
+        st.info(
+            "V3 방식(사람이 공식 문서를 읽고 선정)은 2015-06 이전으로 확장할 때 "
+            "**hindsight 를 배제했다고 증명할 수가 없습니다** — 과거 사건은 이미 결과가 "
+            "알려져 있어서, 선의로 골라도 유명한 사건 쪽으로 기웁니다.  \n\n"
+            "V10 은 방식을 바꿨습니다. **동결된 질의군으로 전수 취득 → 제목에 대한 "
+            "결정적 함수로 편입.** 고르는 행위 자체가 없으므로 "
+            "‘가격이 움직여서 골랐다’가 성립할 수 없습니다.")
+
+        c = st.columns(4)
+        c[0].metric("최초 Event 시점", eh["earliest_known_at"][:7],
+                    delta=f"V9 {eh['v9_earliest_known_at'][:7]}", delta_color="off")
+        c[1].metric("취득 문서", f"{eh['documents_fetched']:,}")
+        c[2].metric("편입 레코드", f"{eh['records']:,}")
+        c[3].metric("커버 개월", f"{eh['months_covered']} / 204",
+                    delta="결측 연도 0", delta_color="off")
+
+        by_year = D10["event_year"]
+        fig = go.Figure()
+        fig.add_bar(x=by_year["year"].astype(str), y=by_year["records"],
+                    marker_color=["#94A3B8" if int(y) < 2015 else "#2563EB"
+                                  for y in by_year["year"]],
+                    text=by_year["records"], textposition="outside",
+                    showlegend=False)
+        fig.add_vline(x=5.5, line=dict(color="#DC2626", width=1.6, dash="dash"))
+        fig.add_annotation(x=5.5, y=1.0, yref="paper", text="V9 의 Event 하한 (2015-06)",
+                           showarrow=False, xanchor="left", xshift=6,
+                           font=dict(size=11.5, color="#DC2626"))
+        show(finish(
+            fig, question="Q. Event 이력이 실제로 얼마나 늘었는가?",
+            title="연도별 Event 레코드 수  "
+                  "<span style='font-size:13px;color:#6B7280'>회색 = V9 가 "
+                  "가지지 못했던 구간</span>",
+            ylab="레코드 수", xlab="", height=420, legend=False))
+
+        st.markdown("#### 구성")
+        comp = D10["event_comp"]
+        cc = st.columns(2)
+        for col, dim, ko in ((cc[0], "family", "발행 기관·문서 유형"),
+                             (cc[1], "channel", "전달 채널")):
+            sub = comp[comp["dimension"] == dim]
+            with col:
+                fig = go.Figure()
+                fig.add_bar(x=sub["records"], y=sub["value"], orientation="h",
+                            marker_color="#0D9488",
+                            text=sub["records"], textposition="outside",
+                            showlegend=False)
+                fig.update_yaxes(autorange="reversed")
+                show(finish(fig, title=ko, ylab="", xlab="레코드 수",
+                            height=360, legend=False))
+
+        cc = st.columns(2)
+        for col, dim, ko in ((cc[0], "stage", "조치 단계"),
+                             (cc[1], "direction", "가격 압력 방향")):
+            sub = comp[comp["dimension"] == dim]
+            with col:
+                fig = go.Figure()
+                fig.add_bar(x=sub["records"], y=sub["value"], orientation="h",
+                            marker_color="#7C3AED",
+                            text=sub["records"], textposition="outside",
+                            showlegend=False)
+                fig.update_yaxes(autorange="reversed")
+                show(finish(fig, title=ko, ylab="", xlab="레코드 수",
+                            height=360, legend=False))
+
+        st.markdown("#### 이 방식이 못 하는 것 — 미리 적어 둡니다")
+        st.warning(
+            f"**국가명으로 편입한 레코드가 {eh['producer_only_records']:,}건 있습니다.** "
+            "제재 문서 제목에는 상품명이 없는 경우가 많아 국가명을 편입 어휘에 넣었는데, "
+            "같은 국가명이 철강과 무관한 품목의 반덤핑 사건 제목에도 들어 있습니다 "
+            "(새우·마늘·클립 등).  \n\n"
+            "**여기서 규칙을 고치지 않았습니다.** 편입 규칙은 이미 동결됐고, 지금 손대면 "
+            "‘결과를 보고 데이터를 고른 것’과 구별할 수 없습니다. 대신 다음 단계의 "
+            "**target 별 관련성**이 이 문제를 처리합니다 — 국가 단위 제재는 그 나라의 "
+            "상품 공급 전체에 작용하지만, 품목별 무역구제는 제목에 품목이 이미 적혀 "
+            "있으므로 우리 사슬 밖이면 전달 경로가 없습니다.")
+
+        st.markdown("#### hindsight 안전장치")
+        st.dataframe(pd.DataFrame([
+            {"안전장치": "프로토콜 동결이 취득보다 먼저",
+             "확인": "git 커밋 순서로 강제 (테스트)"},
+            {"안전장치": "사람이 개별 사건을 고르지 않음",
+             "확인": "편입은 제목에 대한 결정적 함수"},
+            {"안전장치": "구축 중 가격을 보지 않음",
+             "확인": "구축 코드가 가격 모듈을 import 하지 않음 (AST 검사)"},
+            {"안전장치": "표본추출 없음", "확인": "연도별 전수 취득, 상한 도달 시 중단"},
+            {"안전장치": "known_at = 관보 게재일",
+             "확인": "서명일이 게재일보다 뒤인 레코드 0건"},
+            {"안전장치": "문서 본문 미저장", "확인": "메타데이터 필드만 보관"},
+        ]), hide_index=True, width="stretch")
+
+    # ================= 2. Transmission Model ===========================
+    elif v10_view == "Transmission Model":
+        tr = V10["transmission"]
+        st.markdown("#### Event 하나가 예측에 닿기까지")
+        st.markdown(
+            "<div style='background:#F8FAFC;border:1px solid #E2E8F0;"
+            "border-radius:8px;padding:16px;font-size:14px;line-height:2.0'>"
+            "<b>공식 문서</b> → <b>target 별 관련성</b> → <b>경제적 노출</b> → "
+            "<b>신규성</b> → <b>전달 채널</b> → <b>기대 시차</b> → "
+            "<b>방향 · 신뢰도</b> → <b>월별 압력</b></div>",
+            unsafe_allow_html=True)
+        st.caption("일곱 단계 전부 **성능을 보기 전에** 경제 논리로만 고정했습니다.")
+
+        st.markdown("##### 1) target 별 관련성 — 여기가 V9 가 못 푼 지점입니다")
+        rel = pd.DataFrame(tr["relevance"]).T
+        rel.index = [TL.get(i, i) for i in rel.index]
+        rel.columns = ["철강 사슬", "구리 사슬", "석유 사슬"]
+        st.dataframe(rel.style.format("{:.2f}").background_gradient(
+            cmap="Blues", vmin=0, vmax=1), width="stretch")
+        st.markdown(
+            f"- 광역 거시 조치: **{tr['macro_wide']}** "
+            "(단, `…Day/Week/Month, 20xx` 형태의 의례적 포고는 **0**)\n"
+            f"- 국가명만 매치: **{tr['producer_country_level']}** — "
+            "**국가 단위 수단일 때만** "
+            f"({', '.join(x.replace('FR_', '') for x in tr['country_level_families'])})")
+
+        st.markdown("##### 2) 기대 시차 — 성능이 좋은 lag 를 고르지 않았습니다")
+        lag = pd.DataFrame(tr["expected_lag"]).T
+        lag.index = [TL.get(i, i) for i in lag.index]
+        lag.columns = ["무역정책", "지정학·공급", "수요·거시"]
+        st.dataframe(lag.style.format("{:.0f}개월"), width="stretch")
+        st.info(
+            "원유는 연속 현물시장에서 세계적으로 **즉시** 재가격되므로 공급·지정학 "
+            "충격이 당월에 도달합니다. 금속 원료는 물리적 계약·재고를 거쳐 한 달 "
+            "정도 늦습니다.  \n\n"
+            "V9 은 ‘lag 0~1 에서 lift 가 가장 크다’를 관측했지만 **그 사실을 이 표에 "
+            "반영하지 않았습니다.** 반영했다면 그것이 성능 되먹임입니다.")
+
+        st.markdown("##### 3) 노출 · 확실성 · 신규성")
+        cc = st.columns(3)
+        with cc[0]:
+            st.markdown("**노출 — 수단의 제도적 폭**")
+            st.dataframe(pd.DataFrame(
+                [{"수단": k.replace("FR_", ""), "노출": v}
+                 for k, v in tr["exposure_by_family"].items()]),
+                hide_index=True, width="stretch")
+        with cc[1]:
+            st.markdown("**확실성 — 조치 단계**")
+            st.dataframe(pd.DataFrame(
+                [{"단계": k, "확실성": v} for k, v in tr["certainty_by_stage"].items()]),
+                hide_index=True, width="stretch")
+        with cc[2]:
+            st.markdown("**신규성 배수**")
+            st.dataframe(pd.DataFrame(
+                [{"신규성": k, "배수": v} for k, v in tr["surprise_multiplier"].items()]),
+                hide_index=True, width="stretch")
+        st.caption(
+            "관세율·교역액 같은 **수치 노출은 쓰지 않았습니다** — 과거 시점 기준으로 "
+            "안전하게 재구성할 수 없기 때문입니다. 재구성 못 하는 값을 만들어 내지 "
+            "않습니다.")
+
+        st.markdown("#### 진단 — 기제는 살아났는데, 도움이 안 됩니다")
+        dg = V10["scrap"]["diagnostics"]
+        eb, rv = dg["event_block"], dg["revisions_m2_vs_m1"]
+        c = st.columns(4)
+        c[0].metric("Event 신호의 서로 다른 값",
+                    f"{eb['ev_net_distinct_values']} / 50",
+                    delta="V9 게이트는 사실상 상수였음", delta_color="off")
+        c[1].metric("예측을 실제로 움직인 달", f"{rv['n_moved']} / 50")
+        c[2].metric("평균 수정폭", f"{rv['mean_abs_revision']:.2f}")
+        c[3].metric("유익한 수정률", f"{rv['beneficial_rate']:.2f}",
+                    delta=f"유해 {rv['harmful_rate']:.2f}", delta_color="off")
+        st.error(
+            "**V9 과 결정적으로 다른 지점입니다.** V9 은 Event 게이트가 한 번도 열리지 "
+            "않아서 ‘기제가 죽어 있다’로 설명할 수 있었습니다. V10 은 기제가 "
+            f"**살아 있습니다** — 신호가 50개 시점에서 50개 서로 다른 값을 갖고, "
+            f"50개 시점 **모두**에서 예측을 평균 {rv['mean_abs_revision']:.1f} 지수 "
+            f"포인트만큼 움직입니다.  \n\n"
+            f"그런데 그 움직임이 유익 {rv['beneficial_rate']:.2f} / "
+            f"유해 {rv['harmful_rate']:.2f} 로 **동전 던지기와 구분되지 않습니다.**")
+
+        st.markdown("#### 동결된 신호 정의가 퇴화했습니다 — 고치지 않고 보고합니다")
+        sig = dg["v10_signal"]
+        st.warning(
+            f"성능을 보기 전에 ‘`ev_new > 0` 인 달을 Event 신호월로 본다’고 정의했는데, "
+            f"레코드가 11,293건이라 **50개월 전부가 신호월**이 됐습니다 "
+            f"(precision {sig['precision']} = 기저율 {sig['base_rate']}, "
+            f"lift {sig['lift']}).  \n\n"
+            "이 퇴화 자체가 결과이므로 **정의를 사후에 바꾸지 않았습니다.** "
+            "퇴화를 설명하는 서술 진단은 별도로 기록했고 어떤 주장에도 쓰지 않습니다.")
+
+    # ================= 3. Cross-Target Matched History =================
+    elif v10_view == "Cross-Target Matched History":
+        st.markdown("#### 1차 공정 비교 — 같은 창, 같은 학습행, 같은 예측시점")
+        st.info(
+            f"공통 학습 시작 **{CT['matched_train_start']}**, 예측시점 "
+            f"**{CT['n_origins']}개**. 첫 시점에서 네 대상의 학습행이 "
+            "**정확히 같습니다**. 절대 MAE 로 상품 간 순위를 매기지 않고 "
+            "**상품 안에서의 상대 개선률**만 비교합니다 — 지수 단위·수준·변동성이 "
+            "다르기 때문입니다.")
+
+        rows = [r for r in CT["rows"] if r["mode"] == "MATCHED"]
+        fig = go.Figure()
+        fig.add_bar(x=[r["label"] for r in rows],
+                    y=[r["history_to_market"] for r in rows],
+                    name="시장정보 효과 (M0→M1)", marker_color="#0D9488",
+                    text=[f"{r['history_to_market']:+.1f}%" for r in rows],
+                    textposition="outside")
+        fig.add_bar(x=[r["label"] for r in rows],
+                    y=[r["event_incremental"] for r in rows],
+                    name="Event 증분 효과 (M1→M2)", marker_color="#DB2777",
+                    text=[f"{r['event_incremental']:+.1f}%" for r in rows],
+                    textposition="outside")
+        fig.add_hline(y=0, line=dict(color="#374151", width=1.2))
+        fig.add_hline(y=3, line=dict(color="#DC2626", width=1.4, dash="dash"))
+        fig.add_annotation(xref="paper", x=0.99, y=3, xanchor="right",
+                           text="Event 성공 판정 임계 +3%", showarrow=False,
+                           yshift=12, font=dict(size=11.5, color="#DC2626"))
+        show(finish(
+            fig, question="Q. Event 는 어떤 상품에서 통하는가?",
+            title="같은 이력 조건에서의 상대 개선률  "
+                  "<span style='font-size:13px;color:#6B7280'>양수 = 정보를 "
+                  "더해서 좋아짐</span>",
+            ylab="상대 개선률 (%)", xlab="", height=440))
+
+        st.dataframe(pd.DataFrame([
+            {"대상": r["label"], "M0": r["mae_M0"], "M1": r["mae_M1"],
+             "M2": r["mae_M2"],
+             "시장정보 효과 %": r["history_to_market"],
+             "Event 증분 %": r["event_incremental"], "Event p": r["ev_p"],
+             "방향 M1": r["direction_M1"], "방향 M2": r["direction_M2"],
+             "유익한 수정률": r["beneficial"],
+             "LOO 음수 개수": r["loo_below_zero"]}
+            for r in rows]).style.format(
+                {"M0": "{:.2f}", "M1": "{:.2f}", "M2": "{:.2f}",
+                 "시장정보 효과 %": "{:+.2f}", "Event 증분 %": "{:+.2f}",
+                 "Event p": "{:.3f}", "방향 M1": "{:.2f}", "방향 M2": "{:.2f}",
+                 "유익한 수정률": "{:.2f}"}),
+            hide_index=True, width="stretch")
+        st.caption("M0/M1/M2 의 MAE 는 **같은 상품 안에서만** 비교하십시오. "
+                   "네 지수는 단위가 다릅니다.")
+
+        best = V10["success_criteria"]["best_cell"]
+        st.error(
+            f"**동결된 8조건을 통과한 대상이 하나도 없습니다.** 가장 좋았던 것은 "
+            f"**{best['label']}**({best['mode']})의 "
+            f"**{best['event_incremental']:+.2f}%** 인데, 동결 임계 **3%** 에 미달하고 "
+            f"p = {best['p_value']} 로 사전 동결 추론도 지지하지 않습니다.  \n\n"
+            "즉 **스크랩만 어려운 것이 아닙니다.** 이력 지지를 통제하면 Event 전달 "
+            "표현은 네 상품 어디에서도 신뢰할 만한 증분을 내지 못합니다.")
+
+    # ================= 4. Cross-Target Maximum History =================
+    elif v10_view == "Cross-Target Maximum History":
+        st.markdown("#### 2차 · 강건성 — 각 대상이 자기 최대 이력을 다 쓰면?")
+        st.warning(
+            "**이것은 1차 공정 비교가 아닙니다.** 대상마다 학습 이력의 길이가 다르므로 "
+            "상품 간 우열의 근거로 쓰지 않고, **matched 결론이 뒤집히는지**만 봅니다.")
+
+        pairs = []
+        for t in CT["targets"]:
+            m = next(r for r in CT["rows"] if r["target_id"] == t and r["mode"] == "MATCHED")
+            x = next(r for r in CT["rows"] if r["target_id"] == t and r["mode"] == "MAXIMUM")
+            pairs.append((m, x))
+        fig = go.Figure()
+        fig.add_bar(x=[p[0]["label"] for p in pairs],
+                    y=[p[0]["event_incremental"] for p in pairs],
+                    name="matched (1차)", marker_color="#2563EB",
+                    text=[f"{p[0]['event_incremental']:+.1f}%" for p in pairs],
+                    textposition="outside")
+        fig.add_bar(x=[p[1]["label"] for p in pairs],
+                    y=[p[1]["event_incremental"] for p in pairs],
+                    name="maximum (2차)", marker_color="#94A3B8",
+                    text=[f"{p[1]['event_incremental']:+.1f}%" for p in pairs],
+                    textposition="outside")
+        fig.add_hline(y=0, line=dict(color="#374151", width=1.2))
+        show(finish(
+            fig, question="Q. 이력을 더 주면 Event 가 살아나는가?",
+            title="Event 증분 효과 — 이력 조건별  "
+                  "<span style='font-size:13px;color:#6B7280'>양수 = Event 가 "
+                  "도움</span>",
+            ylab="Event 증분 개선률 (%)", xlab="", height=430))
+
+        st.dataframe(pd.DataFrame([
+            {"대상": p[0]["label"],
+             "matched 학습행": p[0]["n_train_first"],
+             "maximum 학습행": p[1]["n_train_first"],
+             "maximum 학습시작": p[1]["first_train_month"],
+             "M1 matched": p[0]["mae_M1"], "M1 maximum": p[1]["mae_M1"],
+             "Event matched %": p[0]["event_incremental"],
+             "Event maximum %": p[1]["event_incremental"]}
+            for p in pairs]).style.format(
+                {"M1 matched": "{:.2f}", "M1 maximum": "{:.2f}",
+                 "Event matched %": "{:+.2f}", "Event maximum %": "{:+.2f}"}),
+            hide_index=True, width="stretch")
+
+        st.error(
+            "**이력을 늘리면 Event 는 좋아지는 것이 아니라 나빠집니다.**  \n\n"
+            "원유가 가장 선명합니다 — 학습행이 86 → 144 로 늘자 시장 모델(M1)이 "
+            "**19% 좋아졌고**, 그와 함께 Event 의 +2.34% 가 −2.22% 로 뒤집혔습니다.  \n\n"
+            "Event 가 하던 일은 ‘새 정보를 더하는 것’이 아니라 **약한 기준선의 빈틈을 "
+            "메우는 것**이었다고 읽는 편이 자료와 더 잘 맞습니다. 기준선이 스스로 그 "
+            "빈틈을 메우면 Event 는 남길 것이 없습니다.")
+
+    # ================= 5. Full Weekly Rolling Nowcast ==================
+    else:
+        wk = V10["weekly"]
+        if not wk.get("available"):
+            st.info("주간 nowcast 산출물이 아직 없습니다.")
+        else:
+            st.markdown("#### 매주, 그 시점에 실제로 알려진 모든 정보로 다시 예측")
+            st.info(
+                "**V9 주간과 다릅니다.** V9 은 시장 baseline 을 W0 에 고정하고 "
+                "**Event 만** 예측을 고치게 했습니다. V10 은 매주 M0·M1·M2 를 "
+                "**전부 다시 적합**합니다.  \n\n"
+                "주간 시장 계열은 쓰지 않았습니다(과거 시점 재구성이 불가능해 "
+                "REJECT). 대신 **전월 PPI 가 대상월 중순에 발표**되므로 W2 부터 "
+                "정보가 실제로 한 달 더 신선해집니다.")
+
+            cc = st.columns(3)
+            wt = cc[0].selectbox("대상", CT["targets"],
+                                 format_func=lambda t: TL[t], key="v10_wk_t")
+            wm = cc[1].selectbox("이력 조건", wk["modes"], key="v10_wk_m",
+                                 format_func=lambda m: (
+                                     "matched (1차 공정비교)" if m == "MATCHED"
+                                     else "maximum (2차 강건성)"))
+            wmod = cc[2].multiselect("표시할 모델", ["M0", "M1", "M2"],
+                                     default=["M1", "M2"], key="v10_wk_mods")
+
+            rows = [r for r in wk["metrics"]
+                    if r["target_id"] == wt and r["mode"] == wm]
+            colr = {"M0": "#2563EB", "M1": "#0D9488", "M2": "#DB2777"}
+            name = {"M0": "과거 이력만 (M0)", "M1": "+ 시장정보 (M1)",
+                    "M2": "+ Event (M2)"}
+            fig = go.Figure()
+            for mdl in ["M0", "M1", "M2"]:
+                if mdl not in wmod:
+                    continue
+                sub = sorted([r for r in rows if r["model"] == mdl],
+                             key=lambda r: r["stage"])
+                fig.add_scatter(x=[r["stage"] for r in sub],
+                                y=[r["mae"] for r in sub], mode="lines+markers+text",
+                                name=name[mdl], line=dict(color=colr[mdl], width=2.6),
+                                marker=dict(size=9),
+                                text=[f"{r['mae']:.1f}" for r in sub],
+                                textposition="top center")
+            show(finish(
+                fig, question="Q. 월이 흘러갈수록 예측이 좋아지는가?",
+                title=f"{TL[wt]} — 주간 nowcast 궤적  "
+                      "<span style='font-size:13px;color:#6B7280'>MAE ↓ "
+                      "낮을수록 정확</span>",
+                ylab="평균 예측오차 MAE (지수 Point)",
+                xlab="대상월 안에서의 시점", height=440))
+
+            m1 = [r for r in rows if r["model"] == "M1"]
+            w0 = next((r["mae"] for r in m1 if r["stage"] == "W0"), None)
+            w4 = next((r["mae"] for r in m1 if r["stage"] == "W4"), None)
+            if w0 and w4:
+                c = st.columns(3)
+                c[0].metric("M1 · W0 (월 시작)", f"{w0:.2f}")
+                c[1].metric("M1 · W4 (월 말)", f"{w4:.2f}",
+                            delta=f"{100 * (w4 / w0 - 1):+.1f}%",
+                            delta_color="inverse")
+                ev = [r for r in wk["trajectory"]
+                      if r["target_id"] == wt and r["mode"] == wm
+                      and r["model"] == "EVENT_INCREMENT_W4"]
+                if ev:
+                    c[2].metric("W4 에서 Event 증분",
+                                f"{ev[0]['event_incremental']:+.2f}%",
+                                help="양수면 Event 가 그 시점에 도움이 됐다는 뜻")
+
+            st.markdown("#### 주간 수정의 질")
+            tr = [r for r in wk["trajectory"]
+                  if r["target_id"] == wt and r["mode"] == wm
+                  and r["model"] in ("M0", "M1", "M2")]
+            st.dataframe(pd.DataFrame([
+                {"모델": name[r["model"]], "W0 MAE": r["mae_W0"],
+                 "W4 MAE": r["mae_W4"], "변화": r["change"],
+                 "수정된 달": r["months_revised"],
+                 "유익한 수정률": r["beneficial"], "유해한 수정률": r["harmful"],
+                 "주간 구제율": r["rescue"], "잘못된 뒤집기": r["false_override"],
+                 "방향이 처음 맞은 단계": r["first_correct_stage"]}
+                for r in tr]).style.format(
+                    {"W0 MAE": "{:.2f}", "W4 MAE": "{:.2f}", "변화": "{:+.2f}"},
+                    na_rep="—"),
+                hide_index=True, width="stretch")
+
+            st.markdown("#### 네 대상을 한눈에 — W0 → W4 정확도 변화")
+            fig = go.Figure()
+            for mdl in ("M0", "M1", "M2"):
+                ys = []
+                for t in CT["targets"]:
+                    r = next((x for x in wk["trajectory"]
+                              if x["target_id"] == t and x["mode"] == wm
+                              and x["model"] == mdl), None)
+                    ys.append(100.0 * (r["mae_W4"] / r["mae_W0"] - 1.0)
+                              if r and r["mae_W0"] else None)
+                fig.add_bar(x=[TL[t] for t in CT["targets"]], y=ys, name=name[mdl],
+                            marker_color=colr[mdl],
+                            text=[f"{v:+.0f}%" if v is not None else "" for v in ys],
+                            textposition="outside")
+            fig.add_hline(y=0, line=dict(color="#374151", width=1.2))
+            show(finish(
+                fig, question="Q. 정보가 갱신되면 어떤 모델이 더 빨리 좋아지는가?",
+                title="W0 → W4 오차 변화율  "
+                      "<span style='font-size:13px;color:#6B7280'>음수 = "
+                      "월이 흐르며 정확해짐</span>",
+                ylab="MAE 변화율 (%)", xlab="", height=430))
+            st.success(
+                "**주간 nowcast 자체는 작동합니다.** 월 중순에 전월 PPI 가 발표되면 "
+                "정보가 실제로 갱신되고 예측이 뚜렷하게 좋아집니다. 다만 그 이득은 "
+                "**정보 갱신과 시장정보(M1)에서 오지, Event(M2)에서 오지 않습니다.**")
+
 # ===========================================================================
 # 4. AGENT TEAM  (§PART N)
 # ===========================================================================
@@ -1656,8 +2210,9 @@ with tabs[4]:
             "F. V8 독립 신호 · 충격 구제 (전체 비교)",
             "G. V8 데이터 확장 타당성",
             "H. V9 장기 이력 · 주간 사건 (전체 비교)",
-            "I. 전체 Metrics Table",
-            "J. 방법론 · 산출물",
+            "I. V10 Event 이력 확장 · 전달 모델 · 교차 대상 · 주간 nowcast",
+            "J. 전체 Metrics Table",
+            "K. 방법론 · 산출물",
         ])
 
     if section.startswith("A"):
@@ -2005,6 +2560,74 @@ with tabs[4]:
             "steel_scrap_v9_by_origin.csv", "text/csv")
 
     elif section.startswith("I"):
+        st.markdown("#### V10 — 다섯 갈래를 한 번에 물었습니다")
+        st.markdown(
+            "V10 은 하나의 성공/실패 라벨로 뭉치지 않습니다. 각 갈래를 따로 보고합니다.")
+        eh = V10["event_history"]
+        st.dataframe(pd.DataFrame([
+            {"갈래": "A. Event 이력 확장", "무엇을 했나":
+                f"Federal Register 공개 API 로 2009-01 까지 소급 "
+                f"({eh['v9_records']}건 → {eh['records']:,}건)",
+             "결과": "이력은 늘었으나 M2 는 사실상 무변화 "
+                     f"({V10['scrap']['event_history_expansion_effect_pct']:+.2f}%)"},
+            {"갈래": "B. Event 전달 표현", "무엇을 했나":
+                "관련성·노출·신규성·채널·시차·방향·신뢰도 7단계 온톨로지",
+             "결과": "기제는 살아났지만(신호 50개 서로 다른 값) 수정이 무익 "
+                     "(유익 0.48 / 유해 0.52)"},
+            {"갈래": "C. Target-Specific X", "무엇을 했나":
+                "대상마다 ‘같은 사슬의 전방 제품 + 공통 에너지’ 설계",
+             "결과": "구리에서 +22%, 철광석 maximum 에서 −19% — 상품마다 크게 다름"},
+            {"갈래": "D. 교차 대상 검증", "무엇을 했나":
+                "matched(1차) + maximum(2차), 네 대상 같은 50개월",
+             "결과": "동결 8조건을 통과한 대상 0 — 스크랩만의 문제가 아님"},
+            {"갈래": "E. 완전 주간 nowcast", "무엇을 했나":
+                "매주 M0/M1/M2 전부 재적합 (2,000행)",
+             "결과": "**작동한다** — 월중 오차가 26~48% 감소. 다만 이득은 정보 갱신에서"},
+        ]), hide_index=True, width="stretch")
+
+        st.markdown("#### 스크랩 결과 계층 — 낡은 기준선을 이겼다고 성공이라 하지 않습니다")
+        mae = V10["scrap"]["mae"]
+        order = [("FROZEN_M0", "낡은 이력 기준선 (M0)"),
+                 ("FROZEN_M2_Gate_v8", "V8 Event 게이트"),
+                 ("M0_MAX", "V10 장기 이력 (M0)"),
+                 ("M1_MAX", "+ 시장정보 (M1)"),
+                 ("M2_LEGACYWIN_MAX", "+ Event · 2015년 이후 이력"),
+                 ("M2_MAX", "+ Event · 2009년 이후 이력")]
+        vals = [mae[k] for k, _ in order]
+        fig = go.Figure()
+        fig.add_bar(x=[lab for _, lab in order], y=vals,
+                    marker_color=["#9CA3AF", "#9CA3AF", "#059669", "#0D9488",
+                                  "#F59E0B", "#DB2777"],
+                    text=[f"{v:.2f}" for v in vals], textposition="outside",
+                    showlegend=False)
+        fig.add_hline(y=mae["M0_MAX"], line=dict(color="#059669", width=1.6,
+                                                 dash="dash"))
+        show(finish(
+            fig, question="Q. Event 를 더한 모델이 최강 비-Event 기준선을 이겼는가?",
+            title="같은 50개월 · 스크랩  "
+                  "<span style='font-size:13px;color:#6B7280'>MAE ↓ 낮을수록 정확</span>",
+            ylab="평균 예측오차 MAE (지수 Point)", xlab="",
+            footnote=FOOT_TARGET, height=430, legend=False))
+        st.error(
+            "**Event 이력을 2015년 이후에서 2009년 이후로 늘려도 결과가 거의 그대로입니다"
+            f"({V10['scrap']['event_history_expansion_effect_pct']:+.2f}%).** "
+            "V9 이 남긴 ‘Event 이력이 부족해서 실패한 것 아닌가’라는 물음에 대한 답은 "
+            "**아니오** 입니다.")
+
+        st.markdown("#### 사전 동결한 8조건 — 적용 결과")
+        sc = V10["success_criteria"]
+        st.dataframe(pd.DataFrame([
+            {"#": k, "조건": v,
+             "결과": "✗ 실패" if k in sc["failed_conditions"] else "✓"}
+            for k, v in sc["conditions"].items()]),
+            hide_index=True, width="stretch")
+        st.warning(f"**승격하지 않습니다.** {sc['reason']}")
+        st.download_button(
+            "V10 교차 대상 상대 skill CSV 내려받기",
+            D10["cross_skills"].to_csv(index=False).encode("utf-8-sig"),
+            "steel_scrap_v10_cross_target_skills.csv", "text/csv")
+
+    elif section.startswith("J"):
         st.markdown("모든 실험의 전체 지표입니다. **하나도 삭제되지 않았습니다.**")
         vm = D["v5_metrics"].copy()
         vm["모델"] = vm["model"].map(lambda m: LABEL.get(m, m))

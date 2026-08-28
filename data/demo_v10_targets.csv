@@ -1,0 +1,9 @@
+target_id,label,series_id,official_name,organization,role,x_core,first_observation_month,last_observation_month,months,gaps,matched_train_start,maximum_train_start,maximum_n_train_first_origin,status,why
+SCRAP,철·강 스크랩,WPU1012,PPI commodity index — Iron and steel scrap,U.S. Bureau of Labor Statistics,PRIMARY,WPU1017 + WPU0542,2008-09,2026-01,206,3,2014-09,2009-12,126,PASS,
+IRON_ORE,철광석,WPU1011,PPI commodity index — Iron ores,U.S. Bureau of Labor Statistics,STEEL_CHAIN_CONTROL,WPU1017 + WPU0542,2010-03,2026-01,190,1,2014-09,2011-05,115,PASS,
+COPPER_SCRAP,구리 스크랩,WPU102301,PPI commodity index — Copper base scrap,U.S. Bureau of Labor Statistics,PARALLEL_SCRAP_CONTROL,WPU1024 + WPU0542,2009-12,2026-01,158,36,2014-09,2014-09,86,PASS,
+CRUDE_OIL,원유,WPU0561,PPI commodity index — Crude petroleum (domestic production),U.S. Bureau of Labor Statistics,EVENT_POSITIVE_CONTROL,WPU0571 + WPU0542,2008-09,2026-01,209,0,2014-09,2009-11,144,PASS,
+,iron ore 국제 스팟 지수 (Platts/TSI 등),,iron ore 국제 스팟 지수 (Platts/TSI 등),,,,,,,,,,,REJECT,상용 라이선스. 무료·공개재사용 조건 불충족.
+,LME 구리 가격,,LME 구리 가격,,,,,,,,,,,REJECT,거래소 상용 데이터. 재배포·파생 이용 제한.
+,EIA 주간·일간 원유 가격,,EIA 주간·일간 원유 가격,,,,,,,,,,,REJECT,PIT vintage 아카이브 미확인 — 현재 개정값만 공개(rights manifest 참조).
+,WPU10220131 Copper cathode and refined copper,,WPU10220131 Copper cathode and refined copper,,,,,,,,,,,REVIEW,"target 이 아니라 X 후보였고, 2025-08 회차에서 복원 실패해 코어에서 제외."
