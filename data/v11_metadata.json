@@ -33,6 +33,7 @@
       }
     ],
     "raw_copper_replacement_found": false,
+    "raw_copper_forced_replacement": false,
     "raw_copper_verdicts": {
       "WPU102102": "REJECT — 2021-06 이후 회차에서 복원 행 0",
       "WPU10220131": "REJECT — 대부분 회차에서 파서 fail-closed, 최근 회차 행 0"
@@ -350,5 +351,5 @@
     "각 세대의 **부정적 결과를 그대로 보존한다.** 실패가 다음 버전을 만든 근거다.",
     "발견해 고친 버그는 전후 수치와 함께 공개했다(V10 낱말경계·빈 어휘, V11 Streamlit 렌더)."
   ],
-  "exported_at": "2026-08-29T03:22:30+00:00"
+  "exported_at": "2026-08-29T03:34:04+00:00"
 }
