@@ -351,5 +351,17 @@
     "각 세대의 **부정적 결과를 그대로 보존한다.** 실패가 다음 버전을 만든 근거다.",
     "발견해 고친 버그는 전후 수치와 함께 공개했다(V10 낱말경계·빈 어휘, V11 Streamlit 렌더)."
   ],
-  "exported_at": "2026-08-29T03:34:04+00:00"
+  "prospective": {
+    "protocol_version": "PV-2026-08-29",
+    "label": "pre-outcome locked prospective monthly evaluation with PIT-reconstructed weekly vintages",
+    "run_frequency": "monthly",
+    "is_live_weekly_deployment": false,
+    "result_tier": "D",
+    "months_locked": 0,
+    "months_evaluated": 0,
+    "locked_months": [],
+    "first_planned_lock": "2026-09-02",
+    "first_planned_target_month": "2026-08"
+  },
+  "exported_at": "2026-08-29T05:48:12+00:00"
 }

@@ -1,7 +1,7 @@
 # DEPLOYMENT AUDIT
 
-- 감사 시각(UTC): 2026-08-29T03:22:30+00:00
-- 검사 파일 수: 97
+- 감사 시각(UTC): 2026-08-29T05:48:11+00:00
+- 검사 파일 수: 99
 - 문제: **0건**
 
 > 배포된 앱이 공개로 보일 수 있다고 가정하고 **PUBLIC-SAFE 기준**으로 감사한다.
@@ -32,6 +32,8 @@
 - `assets/forecast_actual_vs_pred.png`
 - `assets/model_story.png`
 - `assets/two_by_two.png`
+- `CITATION.cff`
+- `COPYRIGHT_NOTICE.md`
 - `data/demo_v10_cross_metrics.csv`
 - `data/demo_v10_cross_skills.csv`
 - `data/demo_v10_event_by_year.csv`

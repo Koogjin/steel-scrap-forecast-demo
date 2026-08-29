@@ -1,319 +1,225 @@
 # Commodity Intelligence
 
-### 공식 데이터 공개 시점 기반 Rolling Nowcast
-*Release-Aware Commodity Nowcasting · Point-in-Time Data · Rolling Forecast ·
-Market & Event Attribution*
+**Release-Aware Commodity Nowcasting with True Point-in-Time Data**
 
-> 철·강 스크랩 예측 연구에서 시작해 **철광석·원유** 등 Commodity 로 확장한
-> true-PIT forecasting study 입니다.
-> 각 시점에서 **그때 실제로 공개돼 있던 정보만** 사용합니다.
-> 무료 공개 데이터 · CPU only · 사전등록된 실험.
+*공식 데이터 공개 시점 기반 Commodity Rolling Nowcast*
 
-🎯 **예측 대상은 실제 $/ton 거래가격이 아니라 공식 생산자물가지수(PPI)입니다.**
-연구 데모이며 상용 제품이나 투자 판단 도구가 아닙니다.
+> 월간 Commodity 지표를 **실제 공식 데이터 공개 시점**에 맞춰 갱신하며, 
+> History · Market · Event 정보의 incremental predictive value 를 검증한 연구 프로젝트입니다.
 
----
-
-## 0. 지금의 중심 질문 (V11)
-
-> 공식 정보가 시간에 따라 도착할 때 월간 commodity 예측을 **W0→W4** 로 갱신하면
-> 예측력이 얼마나 개선되고, History / Market / Event 는 각각 어떤 증분 가치를 갖는가?
-
-| 발견 | 값 |
-|---|---|
-| 월중 정보 갱신 효과 (스크랩 W0→W4) | **+45.4%** |
-| 같은 효과 (철광석 / 원유) | +36.1% / +20.3% |
-| 개선이 일어나는 시점 | **W2** — 50개월 중 36개월에 전월 공식 지수가 도착 |
-| 희소 Material Event 의 증분 | **0 ~ 음수** (스크랩 W2 는 −4.8%, p=0.012) |
-| 유료 데이터 | **0건** |
-
-**정보 갱신은 크게 작동하고, 사건 정보는 작동하지 않는다** — 이것이 V1→V11 전체의
-가장 강한 긍정·부정 발견입니다.
+![Python](https://img.shields.io/badge/Python-3.13-3776AB)
+![Streamlit](https://img.shields.io/badge/Streamlit-research%20demo-FF4B4B)
+![Point-in-Time](https://img.shields.io/badge/data-true%20point--in--time-0D9488)
+![Reproducible](https://img.shields.io/badge/research-reproducible-2563EB)
+![Paper](https://img.shields.io/badge/status-paper%20candidate-7C3AED)
 
 ---
 
-## 1. 이전 세대(V5)의 핵심 결과 — 보존
+## 1. 프로젝트 개요
 
-| 모델 | 의미 | MAE ↓ | 지위 |
-|---|---|---|---|
-| M0 | 과거 PPI 기반 | 49.19 | 공식 기준 |
-| M1* | 시장·산업 정보 추가 | 48.83 | V5 운영 |
-| M2* | 공식 Event 정보 추가 | 51.04 | V5 운영 |
+이 연구는 **미국 철·강 스크랩 생산자물가지수(PPI)** 예측에서 시작해 **철광석·원유**로 확장했습니다. 상품을 늘리는 과정에서 중심 질문이 바뀌었습니다.
 
-![성능 비교](assets/executive_performance.png)
+> 월간 지표 예측은 흔히 **그 시점에 실제로는 알 수 없었던 데이터**로 평가됩니다. 
+> 예측 품질은 *어떤 변수를 쓰는가*뿐 아니라 **공식 정보가 언제 공개되는가**에 달려 있습니다.
 
-**시장·산업 정보를 추가한 M1\*** 가 과거 가격만 쓰는 M0 보다 **+0.7%**
-나아졌습니다.
+그래서 이 프로젝트는 각 과거 시점의 **정보 집합을 실제로 재구성**하고(true Point-in-Time), 대상월 안에서 **W0 → W4** 다섯 시점으로 예측을 갱신하며 History / Market / Event 층의 기여를 분리합니다.
 
-**공식 Event 정보는 이번에도 예측 정확도를 개선하지 못했습니다** — M2\* 는 M1\*
-대비 **-4.5%** 입니다. 네 개의 정보 조합 어디에서도, 두 분석 방식 모두에서
-개선이 없었습니다.
+## 2. 연구 질문
 
-> **다만 M1\* 의 개선은 통계적으로 유의하지 않습니다.** 잡음 방어 장치를 끈
-> **통제 비교**에서는 같은 시장 모델이 MAE **47.14** 로 **+4.2%**
-> 개선했습니다 (DM p = 0.075). 두 숫자를 함께 보아야 합니다.
-
----
-
-## 2. 2×2 정보 실험 — 시장과 Event 는 각각 도움이 되었는가
-
-| MAE ↓ | Event 없음 | Event 있음 |
-|---|---|---|
-| **Market 없음** | M0 **49.19** | ME* **51.86** |
-| **Market 있음** | M1* **48.83** | M2* **51.04** |
-
-![2x2](assets/two_by_two.png)
-
-- **시장 정보** — 아래로 갈 때 오차가 **줄어듭니다** (49.19 → 48.83)
-- **Event 정보** — 오른쪽으로 갈 때 오차가 **늘어납니다**
-  (49.19 → 51.86, 48.83 → 51.04)
-
-통제 비교에서 시장 위에 Event 를 얹는 것은 **47.14 → 52.16**
-(DM p = 0.019) 로 가장 뚜렷하게 나빠집니다.
-
-![실제 vs 예측](assets/forecast_actual_vs_pred.png)
-
----
-
-## 3. 무엇이 M1 을 고쳤는가 — 블록 규제
-
-이전 설계는 **하나의 규제 강도**를 모델 전체에 적용했습니다. 그래서 잡음 많은 시장
-변수를 억누르려면 **유용한 가격이력 신호까지 함께 눌러야** 했습니다.
-
-V5 는 가격이력·시장·Event 에 **각각 다른 규제 강도**를 줍니다. 실제로 서로 다른
-값이 선택됐습니다 — 가격이력 규제는 1~10,000 까지 분포했지만 시장 규제는
-**10~100 에만 머물렀습니다.**
-
-선택된 시장 모델: M0-fallback 20 · M1-C pls4 16 · M1-C pls3 8 · M1-C pls2 4 · M1-B block 1 · M1-D combo w=0.25 1
-
-학습 근거가 부족한 **40%** 의 시점에서는 모델이 시장 정보를 쓰지
-않고 가격이력 모델로 되돌아갔습니다.
-
-### 왜 시장 정보가 원래 어려웠나 (실행 전 진단)
-
-| 진단 | 값 |
-|---|---|
-| 학습행 / feature (최소) | **3.27** |
-| 시장 변수 내부 최대 상관 | **0.97** |
-| 개별 시장변수를 과거이력으로 설명한 R² (최대) | **0.89** |
-
----
-
-## 4. 공식 Event 정보 (PEP / NEP)
-
-뉴스 기사 원문을 수집하지 않습니다. **공식적으로 확인된 사건과 상태**를 구조화해
-두 개의 압력 변수로 변환합니다.
-
-- **PEP ↑** — 공식 Event 근거상 **가격 상승 압력**이 강해짐 (0~1)
-- **NEP ↑** — 공식 Event 근거상 **가격 하락 압력**이 강해짐 (0~1)
-
-감성분석이 아니고 **확률도 아니며**, 두 지표는 **독립**입니다.
-
-![사건 압력](assets/event_pressure_timeline.png)
-
-### 모델이 Event 를 얼마나 신뢰했는가
-
-![Event 신뢰도](assets/event_trust.png)
-
-**모델은 90% 의 예측시점에서 Event 정보를 쓰지 않기로 스스로
-선택했습니다.** V4 에서는 Event 가 모든 시점에서 강제로 사용되어 예측을 크게
-흔들었습니다(중앙값 15 지수 Point). V5 의 중앙값 보정폭은 **0.0** 입니다.
-
-그 결과 V4 의 Event 모델(MAE 67.40) 대비 **+24.3%** 나아졌습니다.
-다만 이것은 **Event 를 유용하게 만든 것이 아니라 해롭지 않게 만든 것**입니다.
-
-**V5 는 공식 사건 기록을 하나도 바꾸지 않았습니다** — 바꾼 것은 모델이 그 기록을
-쓰는 방식뿐입니다.
-
----
-
-## 5. 어떤 데이터를 쓰나 — 6개 원천지표 → 12개 파생 Feature
-
-```
-        6개의 원천지표
-              |
-     각각  현재 수준 (Level)
-        +  최근 3개월 변화 (Momentum)
-              |
-        12개의 파생 Feature
-```
-
-> **12개의 서로 다른 외부 데이터셋이 아닙니다.**
-
-| Series ID | 공식 계열명 | 출처 | 무엇을 측정하나 | 파생 Feature |
-|---|---|---|---|---|
-| `WPU1017` | PPI: Steel Mill Products | US BLS | 철강 압연제품의 생산자물가지수 | `_level` · `_chg_3m` |
-| `WPU0542` | PPI: Electric Power | US BLS | 전력의 생산자물가지수 | `_level` · `_chg_3m` |
-| `AWHMAN` | Avg Weekly Hours: Manufacturing | US BLS | 제조업 생산직 주당 평균 근로시간 | `_level` · `_chg_3m` |
-| `INDPRO` | Industrial Production: Total | Federal Reserve Board | 미국 전체 산업생산지수 | `_level` · `_chg_3m` |
-| `IPG331S` | IP: Primary Metal | Federal Reserve Board | 1차 금속(NAICS 331) 산업생산지수 | `_level` · `_chg_3m` |
-| `CAPUTLG331S` | Capacity Utilization: Primary Metal | Federal Reserve Board | 1차 금속(NAICS 331) 설비 가동률 | `_level` · `_chg_3m` |
-
-**이번 단계에서도 새로운 외부 데이터 소스를 추가하지 않았습니다.**
-
----
-
-## 6. 한눈에 보기
+> 공식 정보가 시간에 따라 도착할 때 commodity 예측을 어떻게 갱신해야 하고, 어떤 정보가 실제로 예측을 개선하며, 경제적으로 material 한 **희소 Event 층**이 History·Market 정보 위에 무언가를 더하는가?
 
 | | |
 |---|---|
-| 예측 대상 | **BLS WPU1012** (Iron and steel scrap, PPI) |
-| 설명변수 | Clean-PIT **6개 원천지표 → 12개 파생 Feature** |
-| 예측 시점 | **50개** (2021-11-30 ~ 2025-12-31) |
-| 학습 행 | 72 ~ 118 — **모든 모델 동일** |
-| 공식 사건 | 사안 **17건** · 상태 변화 **49건** |
-| 자동 테스트 | **1307개** |
-| FRED/ALFRED 의존 | **0** |
-| V5 방법론 동결 | `V5A-2026-08-27` (실행 **전** 커밋) |
-| 실행 커밋 | `6aca796aa696` |
+| **RQ1** | true-PIT release-aware 갱신이 월간 commodity nowcast 를 개선하는가? |
+| **RQ2** | 개선을 설명하는 정보 도착은 무엇인가 — Target History · Market/X · Event? |
+| **RQ3** | 그 효과가 matched historical support 아래에서 상품 전반에 재현되는가? |
+| **RQ4** | 경제적으로 걸러낸 Material Event 가 정례 공식 발표를 넘어 증분 가치를 갖는가? |
 
----
+## 3. 핵심 결과
 
-## 7. Claude Code Agent Team
-
-![Agent Team](assets/agent_team.png)
-
-> **한 모델에게 모든 업무를 한 번에 시킨 것이 아니라, 프로젝트를 역할별로 분해하고
-> 전문 Agent 가 각 업무를 수행하도록 구성했습니다.**
-
-| Agent | 역할 |
+| 발견 | 결과 |
 |---|---|
-| **Data Engineer** | 과거 발표본 재구성 · PIT 데이터 · 파서 · 소스 QA |
-| **Forecast Engineer** | feature 파이프라인 · nested CV · 예측 · 지표 |
-| **Research / Event** | 공식 출처 조사 · 사건 상태 코딩 · PEP / NEP |
-| **Independent QA** | PIT leakage 공격 · 방법론 검토 · 테스트 검증 |
-| **Product Agent** | 대시보드 · public-safe export · 배포 |
+| **Release-aware nowcast** | W0→W4 오차가 세 Primary 상품 모두에서 감소 (**+45.4%** · +36.1% · +20.2%) |
+| **가장 큰 기여** | 월 중순 전월 공식 지수 도착 — 50개월 중 **36개월**이 W2 까지 새 target 발표를 받음 |
+| **Target-Specific X** | 상대적으로 제한적 (W4 기준 +1.5% · +1.3% · -0.1%) |
+| **Material Event** | 안정적 증분 예측 가치 **없음** (W4 기준 -1.2% · -1.3% · +0.0%) |
+| **더 긴 true-PIT 이력** | 과거이력 기준선을 유의하게 개선 (V9: 49.19 → 45.57, p=0.045) |
+| **검증** | 50개월 historical OOS + prospective 사전 잠금 수집 시작 |
 
-작업 흐름: **Research → Implementation → Independent QA → Failure Diagnosis →
-Redesign → Dashboard / Deployment**
+연구 이력 전체에서 가장 강한 긍정·부정 발견은 다음 한 문장으로 요약됩니다.
 
----
+> **정보 갱신 주기가 모델보다 컸고, 공식 사건 정보는 이 문제에서 예측 가치를 갖지 않았다.**
 
-## 8. 대시보드 실행
+## 4. Release-Aware Nowcast 프레임워크
+
+대상월 `T` 하나를 다섯 시점에서 예측합니다. **예측 대상은 고정이고 정보만 늘어납니다.**
+
+```text
+  W0            W1            W2            W3            W4
+  전월 말일      7일           14일          21일          말일
+    │             │             │             │             │
+    └─ release_date ≤ cutoff 인 관측 + known_at ≤ cutoff 인 Event 만 사용
+
+  M0 = History only
+  M1 = + Target-Specific Market / Industry
+  M2 = + Material Event      (활성 Event 없으면 M2 ≡ M1)
+```
+
+W0 기준선을 고정하지 않습니다 — **정보 집합 전체가 매 시점 갱신**됩니다.
+
+## 5. 예측 대상과 데이터
+
+| 대상 | 공식 계열 | Target-Specific X | 최대 PIT 이력 시작 |
+|---|---|---|---|
+| 철·강 스크랩 (Iron & Steel Scrap) | `WPU1012` | `WPU1017` + `WPU0542` | 2009-12 |
+| 철광석 (Iron Ore) | `WPU1011` | `WPU1017` + `WPU0542` | 2011-05 |
+| 원유 (Crude Petroleum) | `WPU0561` | `WPU0571` + `WPU0542` | 2009-11 |
+
+모든 계열은 **U.S. Bureau of Labor Statistics** PPI Detailed Report 의 동일 간행물에서 추출합니다 — 같은 발표 일정·같은 `known_at` 규칙이므로 상품 간 비교에서 데이터 불공정이 구조적으로 발생하지 않습니다.
+
+- 유료 데이터: **0건**
+- 사용 기관: U.S. Bureau of Labor Statistics · Office of the Federal Register (NARA)
+- Copper Base Scrap 은 V11 Primary 에서 제외 — 사유는 성능이 아니라 **공통 이력 병목**입니다(빼면 공통 학습 시작이 2014-09 → 2011-05, **+40개월**). V10 아카이브로 보존됩니다.
+
+## 6. Historical Evaluation
+
+- **50개월 multi-year out-of-sample evaluation window** (2021-11-30 ~ 2025-12-31)
+- matched historical support: 공통 학습 시작 **2011-05**
+- maximum-history 조건에서도 동일한 방향으로 재현 (43.6261% · 35.9501% · 15.7593%)
+- 통계 단위는 **대상월**입니다. 다섯 시점을 독립 표본으로 취급하지 않습니다.
+
+### 시점별 오차 (matched · M1)
+
+| 상품 | W0 | W1 | W2 | W3 | W4 |
+|---|---|---|---|---|---|
+| 스크랩 | 47.25 | 47.25 | 29.06 | 25.72 | 25.79 |
+| 철광석 | 5.46 | 5.46 | 4.00 | 3.60 | 3.49 |
+| 원유 | 22.33 | 22.33 | 19.54 | 17.85 | 17.81 |
+
+W0 과 W1 의 오차가 **정확히 같습니다** — 그 사이에 새 공식 발표가 없기 때문이며, 구현이 실제 정보 도착을 따르고 있다는 직접 증거입니다.
+
+## 7. Event Study — 무엇이 작동하지 않았나
+
+공식 관보(Federal Register) 기록을 대규모로 확장하고, 다시 경제적으로 좁혔습니다.
+
+```text
+  공식 문서 11,293건  →  사안(Episode) 3,124개  →  Material Event 53건
+```
+
+네 조건을 **모두** 만족해야 Material Event 로 인정합니다 — 전달 경로 · 새 정보 · 확실성 · 경제적 폭. 그럼에도 증분 예측 가치는 나타나지 않았고, 사전 동결한 중단 규칙 8조건 중 1개만 통과했습니다.
+
+> **Event 는 이제 예측 동력이 아니라 설명·진단·리스크 맥락 층으로 다룹니다.** 
+> 이 결론은 검증된 공식 Event 프레임워크·대상·기간에 한정되며 일반화하지 않습니다.
+
+## 8. Streamlit 연구 데모
+
+대화형 **연구 데모**입니다. 실시간 가격 시스템이나 구매 의사결정 엔진이 아닙니다.
+
+| 페이지 | 내용 |
+|---|---|
+| 개요 | 현재 가장 강한 결론과 대표 그림 |
+| Rolling Nowcast | **50개월 OOS 예측 대 실제 시계열** · 대상월별 W0→W4 궤적 · 주별 정보 도착표 |
+| 리서치 분석 | 상품 비교 · 예측 수렴 · 정보 기여 · Event 진단 |
+| 데이터 & 방법 | target universe · true-PIT 규약 · 데이터 권리 · prospective 상태 · Agent Team |
+| 연구 여정 | V1 → V11 세대별 기록 (실패한 결과까지 보존) |
 
 ```bash
 pip install -r requirements.txt
 streamlit run streamlit_app.py
 ```
 
-앱은 `data/` 의 사전 계산된 결과만 읽습니다. 외부 API 호출·데이터 수집·모델 학습을
-하지 않으므로 연구용 노트북이 꺼져 있어도 동작합니다.
+## 9. 재현성 · 데이터 거버넌스
 
-**기본 화면은 M0 / M1\* / M2\* 세 모델만 보여줍니다.** V1~V7 의 모든 중간 실험은
-`연구 과정 (Research Archive)` 탭에 **하나도 삭제되지 않고** 보관되어 있습니다.
+- **동결 선행**: 방법론을 성능보다 먼저 커밋하고, 동결 커밋에 성능 산출물이 없음을 테스트가 `git ls-tree` 로 강제합니다.
+- **true known_at**: 발표일을 원문 릴리스 캘린더에서 읽고, 확인하지 못한 회차는 **추정하지 않고 폐기**합니다. 현재 개정값으로 과거를 채우지 않습니다.
+- **matched-history 비교**: 상품 간 학습 지지를 통제하고 잔여 불균형을 명시합니다.
+- **결정적 산출물**: 모든 표·그림이 정본 CSV/JSON 에서 재생성됩니다.
+- **권리 매니페스트**: PASS 소스만 사용하고 REVIEW 는 REJECT 와 동일하게 취급합니다.
+- **자동 테스트**로 위 규율을 강제합니다.
 
----
+## 10. Prospective Validation
 
-## 9. Event 는 정확도 밖에서도 쓸모가 없었나 (V6 · V7)
+V11 동결 이후, **실제 결과가 공개되기 전에** 예측을 잠그는 전향적 검증을 수집합니다.
 
-정확도 질문의 답이 일관되게 "아니오"였기 때문에, **질문 자체를 두 번 바꿔서** 다시
-사전등록했습니다.
+- 대상월이 끝난 뒤, 그 달의 공식 지수가 **발표되기 전에** 1회 실행
+- 동결된 known_at 논리로 W0~W4 vintage 를 재구성
+- 해시 + Git 커밋으로 불변 잠금
+- 실제값이 공개되면 **별도 산출물**로 평가 (잠긴 예측은 절대 수정하지 않음)
 
-**V6 — 예측 역할을 바꾸면?** 방향 · 큰 변동 · 전환점. 세 역할 모두 개선 없음.
-다만 이번에 처음으로 **이유**가 보였습니다 — Event 를 포함한 모델만 학습에서 더
-좋아 보이고 실제 예측에서 무너지는 격차(+0.07 ~ +0.24)를 냈습니다.
+정확한 지위: **pre-outcome locked prospective monthly evaluation with PIT-reconstructed weekly vintages**. 도구는 한 달에 한 번 돌고, 주간 vintage 는 그 시점 정보로 재구성한 것입니다 — 매주 실시간으로 도는 운영 시스템이 아닙니다.
 
-**V7 — 정확도 대신 위험을 물으면?** 네 가지를 사전등록했습니다.
-
-| Track | 질문 | 결과 |
-|---|---|---|
-| **A (PRIMARY)** | Event 가 **80% 예측구간**을 개선하는가 | **개선** 방향이지만 **지지 안 됨** (Interval Score 258.3 → 229.2, p = 0.318) |
-| B | Event 가 **급등·급락 위험**을 감지하는가 | **결론 유보** — 급등 사례 4건으로 표본 부족 (서술적으로는 악화) |
-| C | Event 효과가 **시장 상황**에 따라 달라지는가 | **개선** 방향이나 유의하지 않음 (MAE 47.14 → 46.27, p = 0.353) |
-| D | **발표 직전 새로 들어온** Event 가 더 유용한가 | **악화** — 유의하게 더 나쁨 (MAE 47.14 → 48.96, p = 0.00005) |
-
-1차 가설에서 더 중요한 발견은 따로 있습니다 — **목표 80% 구간이 실제로는 100% 를
-덮었습니다.** 구간이 정확한 것이 아니라 **너무 넓습니다.** 구간 폭이 나오는 과거
-오차(2021~22 격변기)가 평가 구간(2023~25)보다 훨씬 격렬했기 때문입니다.
-
-### 사전에 정한 중단 규칙이 발동했습니다
-
-1차 가설 미지지 + 강한 보조 근거 **0건** → **Event 모델 개발을 여기서 멈춥니다.**
-V8 을 시작하지 않고, 새 Event feature 도 새 모형도 새 사건 기록도 추가하지
-않습니다. 다음 단계는 **더 긴 Point-in-Time 이력 확보**입니다
-([계획](docs/next_phase_plan.md) — 계획만, 실행 없음).
-
-V5 의 난수 실험, V6 의 일반화 격차, V7 의 100% 과대커버는 모두 같은 하나를
-가리킵니다: **예측 시점 50개라는 표본 크기.**
-
----
-
-## 10. Event 가 기존 모델의 오판을 뒤집을 수 있나 (V8)
-
-정확도 질문의 답이 아홉 번 아니오였기 때문에, V8 은 질문 대신 **구조**를 바꿨습니다.
-
-먼저 확인한 것이 있습니다 — "예측이 급변과 반대로 움직인다"는 관찰이 **표시 오류인지
-동역학인지**. 50개 예측시점 × 7가지 검사를 **전부 통과**했습니다(문제 0건).
-표시 오류가 아니라 동역학이 문제였습니다.
-
-그래서 **가격이력에 종속되지 않은** 독립 모델을 만들고, 평상에는 기존 모델을 쓰다가
-**급변 의심 구간에서만 Event 가 문을 열어** 독립 전문가로 갈아타게 했습니다.
-
-| 결과 | |
+| 현재 상태 | 값 |
 |---|---|
-| Event 게이트가 열린 시점 | **0 / 50** — 한 번도 열리지 않았다 |
-| 실제 급변 + Event 신호가 있던 달의 평균 열림 | **0.140** ← 가장 낮다 |
-| Event 만 쓴 모델의 급변 방향 적중 | **0.000** (8개월 전부 오답) |
-| 시장만 독립 모델 | 구제 13건 vs **잘못된 뒤집기 14건** |
-| Event 게이트 MAE | 46.76 (M1\* 48.83) |
+| 잠긴 달 | 0 |
+| 채점된 달 | 0 |
+| 첫 예정 잠금 | 2026-09-02 (대상월 2026-08) |
+| 결과 등급 | Tier D — 과거 창 통계에 섞지 않음 |
 
-**게이트는 진짜 급변이 왔을 때 오히려 덜 열렸습니다.** 약하게 역방향인 탐지기입니다.
-이유는 모델이 스스로 말해 줍니다 — 게이트는 50개 시점 중 **44개에서 가장 강한 규제**를
-골랐습니다. 내부 검증이 *"변동시키지 말고 평균을 예측하라"* 고 판정한 것입니다.
+아직 잠긴 달이 없다는 것은 결측이 아니라 **상태**입니다. 전향 관측은 소급해서 만들 수 없고, 시간이 지나야 쌓입니다. 누적되는 동안에는 과거 창(Tier A)이 주 증거로 남습니다.
 
-MAE 는 낮아졌지만 **과장하지 않습니다.** 게이트가 사실상 상수(약 0.20)이므로 이것은
-regime 전환이 아니라 **고정 가중 앙상블**이며, 개선의 대부분이 평상 구간에서
-나옵니다. **충격 구제를 목표로 만든 구조가, 정작 충격에서는 작동하지 않았습니다.**
+## 11. 연구 여정 (V1 → V11)
 
-### Data Scientist Challenge
+| 세대 | 버전 | 핵심 |
+|---|---|---|
+| 1세대 | V1~V4 | Event 표현·스케일링·아키텍처 진단 |
+| 2세대 | V5~V8 | 예측 역할·위험·충격 구제·독립 경로 — 모두 음의 결과 |
+| 3세대 | V9 | 더 긴 true-PIT 이력 → **첫 유의한 개선** |
+| 4세대 | V10 | Event 이력 11,293건 확장 · 교차 상품 · 주간 nowcast |
+| 5세대 | V11 | Release-Aware Nowcasting · Sparse Material Event · Event 중단 |
 
-에이전트 제안 3건 중 **독립 QA 가 1건만 승인**했고, 승인된 그 1건조차 **데이터가
-스스로 거절**했습니다(50개 중 49개에서 "재보정하지 않음" 선택).
+**부정적 결과를 지우지 않았습니다.** 각 세대의 실패가 다음 세대를 만든 근거입니다. 
+자세한 기록은 데모의 *연구 여정* 페이지와 `docs/findings_v*.md` 에 있습니다.
 
-QA 는 제안서의 사실 주장을 하나도 믿지 않고 전부 원본에서 재확인해 **8건이 틀렸음**을
-찾아냈습니다. 그중 둘이 결정적이었습니다 — 주장된 안전장치가 **실제로는 존재하지
-않았고**, 추정된 계수는 **음수**였습니다. 원안대로 실행했다면 대부분의 예측시점에서
-기존 모델의 방향 판단을 강제로 뒤집었을 것입니다. **독립 QA 가 결과를 바꾼 사례입니다.**
+## 12. 연구의 한계
 
-### 데이터 규칙은 성능보다 우선합니다
+1. 주 historical evaluation 은 **50개의 월별 out-of-sample origin** 으로 구성된 multi-year window 입니다. 전체 주효과를 평가하기에 의미 있는 길이지만, **동일한 historical period 가 V5~V11 연구 iteration 에서 반복 관찰**되었습니다.
+2. 따라서 완전히 untouched 한 external holdout 으로 해석하지 않습니다.
+3. 이를 보완하기 위해 **prospective 사전 잠금 검증**을 누적하고 있으며, 초기 prospective n 은 작습니다.
+4. 급변·Event 활성 구간 등 **하위집단 분석은 실제로 small-n** 일 수 있습니다.
+5. 예측 대상은 공식 가격지수/대리지표이며 모든 물리적 현물·거래 가격이 아닙니다.
+6. 큰 rolling 이득은 **전월 공식 지수의 발표 시점 구조**와 강하게 결부돼 있습니다. 다른 발표 구조를 가진 자료로의 일반화는 별도 검증이 필요합니다.
+7. Event 결론은 검증된 공식 Event 프레임워크·대상·기간에 한정됩니다.
 
-18개 소스를 판정해 **통과 8 · 보류 5 · 배제 5**. 보류는 모델링에서 배제와 동일하게
-취급합니다. **V8 모델링에 쓴 4종은 전부 통과 등급이며 새로 들어간 소스는 0건**입니다.
-상업 스크랩 가격 피드처럼 성능에 도움이 될 수 있는 것도 규칙대로 배제했습니다.
+## 13. 저장소 구성
 
-> V8 결과는 **탐색적 구조 연구**입니다. 가설이 이미 관측된 구간에서 나왔으므로
-> 같은 구간의 결과는 새로운 확증 근거가 아닙니다.
-> ([상세](docs/findings_v8.md) · [데이터 확장 타당성](docs/data_expansion_v8.md))
+```text
+├─ streamlit_app.py      연구 데모 인터페이스
+├─ data/                 공개 안전 파생 산출물 (CSV / JSON)
+├─ assets/               프로젝트가 직접 만든 그림
+├─ docs/                 방법론 요약 · 세대별 findings · 배포 감사
+├─ requirements.txt
+├─ CITATION.cff
+└─ COPYRIGHT_NOTICE.md
+```
 
-## 문서
+이 공개 저장소는 **큐레이션된 연구 데모/포트폴리오 표면**입니다. 전체 연구 기록(동결본·진단·원고 준비 자료·전향 검증 아카이브)은 **별도의 비공개 연구 저장소**에서 관리하며, 공개 산출물은 허용 목록 기반 export 로만 나옵니다.
 
-- [경영진 요약](docs/executive_summary.md)
-- [방법론 요약](docs/methodology_summary.md)
-- [Demo V8 결과와 해석](docs/findings_v8.md)
-- [V8 데이터 확장 타당성](docs/data_expansion_v8.md)
-- [Demo V7 결과와 해석](docs/findings_v7.md)
-- [다음 단계 계획 — 더 긴 PIT 이력](docs/next_phase_plan.md)
-- [Demo V6 결과와 해석](docs/findings_v6.md)
-- [Demo V5 결과와 해석](docs/findings_v5.md)
-- [Demo V4 결과와 해석](docs/findings_v4.md)
-- [Demo V3 결과와 해석](docs/findings_v3.md)
-- [사건 압력 방법론 V3](docs/event_method_v3.md)
-- [사건 압력 방법론 V2 (보존)](docs/event_method.md)
-- [배포 보안 감사](docs/DEPLOYMENT_AUDIT.md)
+## 14. 프로젝트 현황
+
+| | |
+|---|---|
+| 연구 단계 | **V11 완료** — Release-Aware Nowcasting 이 현재 중심 framing |
+| Event 연구 | 사전 동결한 중단 규칙에 따라 **예측 재설계 종료** |
+| 논문 준비 | paper-ready consolidation 진행 — 재현 가능한 그림/표·claim-evidence 정리 |
+| Prospective | 2026-09 부터 사전 잠금 수집 시작 |
+| 원고 | **미제출** — 충분한 전향 검증과 최종 검토 후 계획 |
+
+게재·심사 통과 사실은 없습니다. 향후 논문화 시 DOI 가 생기면 그때 추가합니다.
+
+## 인용
+
+이 저장소의 원본 분석·그림·실증 결과를 인용할 때는 `CITATION.cff` 를 참고해 저장소를 인용해 주십시오.
 
 ---
 
-## 11. 한계 (경영진 보고 시 함께 전달)
+### Copyright & Use
 
-- 예측 시점 50개로 검정력이 제한적입니다. **"유의하지 않음"과 "효과 없음"은 다릅니다.**
-- Clean-PIT 대상 패널의 관측월이 137개뿐이라 학습 구간이 짧습니다 (학습행 72~118).
-- **모델 선택 자체가 과적합의 주된 원천입니다.** 예측 대상과 아무 관계 없는 난수조차
-  내부 검증 오차를 중앙값 1.6%(시장) / 5.6%(Event) '개선'했습니다.
-  그래서 **12% 문턱**을 두었고, 그 문턱이 다시 진짜 시장 신호도 일부 막았습니다.
-- 설명변수가 미국 공급·산업활동 축에 치우쳐 있고, 원자재 가격·전방 수요·환율 축이 비어 있습니다.
-- Event 채널별 유용성은 **판별할 수 없습니다** — 두 채널은 평가 구간 내내 활성이고
-  나머지 하나는 2개월만 활성입니다.
-- M1\*/ME\*/M2\* 는 **탐색적 확장**이며 정식 사전등록 결과가 아닙니다.
-- **가장 큰 남은 제약은 표본 크기입니다.** 새 변수나 새 모델이 아니라 **더 긴
-  Point-in-Time 이력**이 근본 제약입니다.
-- 이 Demo는 **공개 지수** 예측이며 특정 기업의 구매가격 예측이 아닙니다.
+© 2026 Repository author. All rights reserved, except for third-party or public-domain materials identified in this repository.
+
+This repository is made publicly viewable for research transparency, portfolio review, and academic evaluation. Public availability does not, by itself, grant permission to copy, redistribute, republish, modify, commercialize, or present the repository's original code, documentation, figures, or research presentation as another person's work.
+
+Academic citation and linking are welcome. For reuse of substantial original materials beyond applicable legal exceptions, please obtain prior permission.
+
+Official source data and third-party materials remain subject to their respective licenses, terms, or public-domain status — including U.S. Bureau of Labor Statistics and Federal Register materials, which are U.S. Government works. See `COPYRIGHT_NOTICE.md`.
+
+<sub>생성: 2026-08-29 · 이 README 의 모든 수치는 정본 산출물에서 자동 생성됩니다.</sub>

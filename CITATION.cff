@@ -1,0 +1,28 @@
+cff-version: 1.2.0
+title: "Commodity Intelligence: Release-Aware Commodity Nowcasting with True Point-in-Time Data"
+message: "If you reference this research, its original figures, or its empirical findings, please cite this repository."
+type: software
+authors:
+  - name: "Koogjin"
+    alias: Koogjin
+repository-code: "https://github.com/Koogjin/steel-scrap-forecast-demo"
+abstract: >-
+  A release-aware nowcasting study of monthly U.S. commodity producer price
+  indexes (iron and steel scrap, iron ores, crude petroleum). Forecasts are
+  updated at five within-month cutoffs (W0-W4) using only information that was
+  actually published by each cutoff, reconstructed from official release
+  calendars. The study separates the incremental predictive contribution of
+  target history, target-specific market/industry information, and officially
+  documented material events, and reports rigorous negative evidence for the
+  event layer.
+keywords:
+  - nowcasting
+  - point-in-time data
+  - commodity prices
+  - producer price index
+  - forecast vintages
+  - information release timing
+  - reproducible research
+version: "V11"
+date-released: 2026-08-29
+license-url: "https://github.com/Koogjin/steel-scrap-forecast-demo/blob/main/COPYRIGHT_NOTICE.md"

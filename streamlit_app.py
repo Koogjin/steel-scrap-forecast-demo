@@ -229,7 +229,12 @@ with tabs[0]:
     reading_guide(
         how="가로축은 **같은 달을 예측한 다섯 시점**입니다. 아래로 내려갈수록 정확합니다.",
         now="W0·W1 은 **정확히 같고 W2 에서 크게 떨어집니다** — 전월 공식 지수가 그때 발표됩니다.",
-        caution="예측 대상 50개월은 이전 단계와 동일합니다. 새 검증창이 아닙니다.")
+        caution="**50개월 다년 과거 아웃오브샘플 평가창**이며, 같은 50개월을 V5~V11 에 "
+                "걸쳐 반복 관측했습니다. 한 번도 보지 않은 외부 검증창은 아닙니다.")
+
+    st.info(
+        "**50개월 전체를 예측 대 실제로 보려면** → `🔄 Rolling Nowcast` 탭 첫 화면. "
+        "**한 번도 보지 않은 관측을 어떻게 쌓는지** → `🧾 데이터 & 방법` 탭의 전향 검증.")
 
 # ===========================================================================
 # 2. ROLLING NOWCAST
@@ -239,6 +244,83 @@ with tabs[1]:
     st.markdown(
         "대상월 하나를 **다섯 시점**에서 예측합니다. 각 시점에서 그때 실제로 공개돼 "
         "있던 정보만 씁니다. **예측 대상은 그대로이고 정보만 늘어납니다.**")
+
+    # -- 50개월 아웃오브샘플 검증 -------------------------------------------
+    st.markdown("#### 50개월 아웃오브샘플 검증 — 예측과 실제값을 나란히")
+    st.markdown(
+        "한 달만 보면 운이 좋았는지 알 수 없습니다. 아래는 **평가창 전체**입니다 — "
+        "매달 그 시점에 알려진 정보만으로 다시 예측했고, 실제값은 나중에 확정된 값입니다.")
+
+    o = st.columns([1.1, 1.1, 1.1, 1.6])
+    o_t = o[0].selectbox("상품", PRIMARY, format_func=lambda t: TL[t], key="oos_t")
+    o_m = o[1].selectbox("이력 조건", ["MATCHED", "MAXIMUM"], key="oos_m",
+                         format_func=lambda m: MODE_LABEL[m])
+    o_mdl = o[2].selectbox("모델", ["M0", "M1", "M2"], index=1, key="oos_mdl",
+                           format_func=lambda m: MODEL_NAME[m])
+    o_st = o[3].multiselect("표시할 예측 시점", STAGES, default=["W0", "W4"],
+                            key="oos_stages",
+                            format_func=lambda s: f"{s} · {STAGE_HELP[s]}")
+
+    ov = D["vintage"]
+    ov = ov[(ov.target_id == o_t) & (ov.history_mode == o_m)].copy()
+    ov["_m"] = pd.to_datetime(ov.target_month + "-01")
+    ov = ov.sort_values("_m")
+    truth = ov.drop_duplicates("target_month")[["_m", "target_month", "y_true"]]
+
+    if not o_st:
+        st.info("예측 시점을 하나 이상 선택하면 그려집니다. (실제값은 항상 표시됩니다)")
+    elif len(truth):
+        fig = go.Figure()
+        fig.add_scatter(x=truth._m, y=truth.y_true.astype(float), mode="lines",
+                        name="실제값 (나중에 확정)",
+                        line=dict(color=ACTUAL_COLOR, width=2.6))
+        dash = {"W0": "dash", "W1": "dashdot", "W2": "dot",
+                "W3": "longdash", "W4": "solid"}
+        width = {"W0": 1.8, "W1": 1.6, "W2": 1.6, "W3": 1.6, "W4": 2.4}
+        for s in STAGES:
+            if s not in o_st:
+                continue
+            sub = ov[ov.stage == s]
+            if not len(sub):
+                continue
+            fig.add_scatter(x=sub._m, y=sub[o_mdl].astype(float), mode="lines",
+                            name=f"{s} 예측 · {STAGE_HELP[s]}",
+                            line=dict(color=MODEL_COLOR[o_mdl], width=width[s],
+                                      dash=dash[s]),
+                            opacity=1.0 if s == "W4" else 0.72)
+        show(finish(
+            fig, question="Q. 평가창 50개월 전체에서 예측은 실제값을 얼마나 따라갔나?",
+            title=f"{TL[o_t]} · {MODEL_NAME[o_mdl]} — "
+                  f"{len(truth)}개월 아웃오브샘플 예측 대 실제",
+            ylab="지수 수준", xlab="대상월",
+            footnote=FOOT_PIT, height=470))
+
+        rows = []
+        for s in STAGES:
+            sub = ov[ov.stage == s]
+            if not len(sub):
+                continue
+            e = (sub[o_mdl].astype(float) - sub.y_true.astype(float)).abs()
+            rows.append({"예측 시점": f"{s} · {STAGE_HELP[s]}",
+                         "개월": int(len(sub)),
+                         "평균절대오차": round(float(e.mean()), 2),
+                         "중앙값": round(float(e.median()), 2),
+                         "최대": round(float(e.max()), 2)})
+        safe_table(pd.DataFrame(rows), hide_index=True, width="stretch")
+        reading_guide(
+            how="검은 선이 **실제값**, 색선이 각 시점의 예측입니다. 겹칠수록 정확합니다.",
+            now="**W4 가 W0 보다 실제값에 가깝게 붙습니다** — 같은 달 안에 도착한 "
+                "공식 정보가 예측을 끌어당깁니다.",
+            caution="**50개월 다년 과거 아웃오브샘플 평가창**입니다. 시간 순서와 "
+                    "Point-in-Time 제약은 진짜지만, **같은 50개월을 V5~V11 에 걸쳐 "
+                    "반복해 관측**했으므로 한 번도 보지 않은 외부 검증창은 아닙니다. "
+                    "전향 검증이 그 자리를 채웁니다(데이터 & 방법 탭).")
+        st.caption(
+            "상품마다 지수의 단위·수준·변동성이 다르므로 **절대 오차를 상품 간에 "
+            "비교하지 않습니다.** 비교는 같은 상품 안에서 시점·모델 사이에서만 합니다.")
+
+    st.divider()
+    st.markdown("#### 한 달을 자세히 — 정보가 들어올 때마다 예측이 어떻게 움직였나")
 
     c = st.columns([1.1, 1.1, 1.3])
     tgt = c[0].selectbox("상품", PRIMARY, format_func=lambda t: TL[t], key="rn_t")
@@ -539,6 +621,37 @@ with tabs[3]:
     c[3].metric("REVIEW·REJECT (사용 금지)",
                 M["rights"]["review"] + M["rights"]["reject"])
 
+    # -- 전향 검증 현황 ------------------------------------------------------
+    PV = M.get("prospective", {})
+    st.markdown("#### 전향 검증 — 결과가 나오기 전에 잠근 예측")
+    locked = int(PV.get("months_locked", 0))
+    evaluated = int(PV.get("months_evaluated", 0))
+    p = st.columns(4)
+    p[0].metric("잠긴 달", f"{locked}건")
+    p[1].metric("채점된 달", f"{evaluated}건")
+    p[2].metric("첫 예정 잠금", PV.get("first_planned_lock", "2026-09-02"))
+    p[3].metric("결과 등급", PV.get("result_tier", "D"),
+                help="과거 창(Tier A) 통계에 섞지 않습니다")
+    if locked == 0:
+        st.info(
+            "**아직 잠긴 달이 없습니다.** 이건 결측이 아니라 상태입니다 — 전향 관측은 "
+            "만들어 낼 수 없고 시간이 지나야 쌓입니다. 소급해서 만든 잠금은 증거가 "
+            "아니므로 만들지 않습니다.")
+    else:
+        st.success(f"전향 관측 {locked}건이 잠겨 있고 그중 {evaluated}건이 채점됐습니다.")
+    st.markdown(
+        f"- **무엇인가** — {PV.get('label', 'pre-outcome locked prospective monthly evaluation with PIT-reconstructed weekly vintages')}\n"
+        "- **어떻게 동작하나** — 대상월이 끝났고 공식 결과가 아직 나오지 않은 시점에 "
+        "W0~W4 를 동결 로직으로 재구성하고, SHA256 해시와 커밋으로 잠급니다.\n"
+        "- **왜 필요한가** — 위의 50개월 평가창은 다년 창이지만 V5~V11 에 걸쳐 반복해 "
+        "관측됐습니다. 한 번도 보지 않은 관측은 앞으로 쌓는 수밖에 없습니다.\n"
+        "- **아닌 것** — 매주 실시간으로 도는 운영 시스템이 아닙니다. 도구는 한 달에 "
+        "한 번 돌고, 주간 vintage 는 그 시점 정보로 **재구성**한 것입니다.")
+    st.caption(
+        "결과 방화벽: 예측 경로에는 결과값이 들어갈 자리가 없습니다(대상월 라벨이 NaN). "
+        "채점은 별도 경로가 하고, 잠긴 파일은 해시 검증 후 읽기만 합니다.")
+
+    st.divider()
     st.markdown("#### 예측 대상과 Target-Specific X")
     safe_table(D["targets"][["label", "series_id", "official_name", "status", "role",
                              "x_core", "matched_train_start", "matched_n_train_first",
