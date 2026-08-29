@@ -64,6 +64,9 @@ COLORS = {"actual": "#111827", "N0": "#9CA3AF", "M0": "#2563EB",
           "M2_ctrl": "#DB2777"}
 UP_COLOR, DOWN_COLOR = "#DC2626", "#2563EB"
 
+#: 코드 블록 조립용 줄바꿈. V8 아카이브 도식에서 정의 없이 쓰이고 있었다.
+NL = chr(10)
+
 #: §42 — 스크린샷이 홀로 돌아다녀도 문맥이 남도록 그림 **안에** 넣는 각주.
 FOOT_TARGET = ("Target: BLS WPU1012 — Iron and steel scrap PPI  ·  "
                "주의: 실제 $/ton 거래가격이 아니라 미국 철·강 스크랩 생산자물가지수")
@@ -211,6 +214,48 @@ def reading_guide(how: str, now: str, caution: str) -> None:
         st.markdown(f"**보는 법** — {how}")
         st.markdown(f"**현재 결과 해석** — {now}")
         st.markdown(f"**해석 시 주의** — {caution}")
+
+
+def safe_table(obj, **kw) -> None:  # noqa: ANN001
+    """표 하나의 스타일링 실패가 페이지 전체를 죽이지 못하게 한다.
+
+    Streamlit Cloud 는 `requirements.txt` 에 적힌 것만 설치한다. pandas Styler 의
+    일부 기능(예: `background_gradient`)은 **matplotlib 을 별도로 요구**하는데,
+    로컬 개발 환경에는 다른 패키지를 통해 딸려 들어와 있어 로컬 테스트는 통과하고
+    Cloud 에서만 빨간 오류 상자가 뜬다(2026-08-29 실측:
+    `Styler.background_gradient requires matplotlib`).
+
+    그래서 (1) 선택적 스타일 의존성을 코드에서 없애고, (2) 그래도 남는 스타일 경로는
+    실패 시 **서식 없는 표로 자동 강등**한다. 데이터는 그대로 보여 준다.
+    """
+    try:
+        st.dataframe(obj, **kw)
+        return
+    except Exception:                                   # noqa: BLE001
+        pass
+    try:
+        raw = obj.data if hasattr(obj, "data") else obj
+        st.dataframe(raw, **kw)
+        st.caption("표 서식을 적용하지 못해 원본 값으로 표시합니다.")
+    except Exception:                                   # noqa: BLE001
+        st.warning("이 표를 표시하지 못했습니다. 다른 내용은 정상입니다.")
+
+
+def heat_table(df: pd.DataFrame, *, title: str, zmax: float = 1.0,
+               fmt: str = "{:.2f}", height: int = 300) -> None:
+    """작은 수치 행렬을 **plotly heatmap** 으로 그린다.
+
+    `Styler.background_gradient` 를 쓰지 않는다 — 같은 시각 인코딩을 이미 의존성인
+    plotly 로 얻으면 matplotlib 이 필요 없다.
+    """
+    fig = go.Figure(go.Heatmap(
+        z=df.to_numpy(dtype=float), x=list(df.columns), y=list(df.index),
+        zmin=0, zmax=zmax, colorscale="Blues", showscale=False,
+        text=[[fmt.format(v) for v in row] for row in df.to_numpy(dtype=float)],
+        texttemplate="%{text}", textfont=dict(size=14),
+        hovertemplate="%{y} · %{x}: %{z}<extra></extra>"))
+    fig.update_yaxes(autorange="reversed")
+    show(finish(fig, title=title, ylab="", xlab="", height=height, legend=False))
 
 
 def show(fig: go.Figure) -> None:
@@ -1139,9 +1184,9 @@ with tabs[2]:
         order = ["A", "B", "C", "D"]
         colors = {"A": "#059669", "B": "#DC2626", "C": "#F59E0B", "D": "#9CA3AF"}
         fig = go.Figure()
-        for k in order:
-            fig.add_bar(x=[f"{k}"], y=[cc.get(k, 0)], name=cl[k],
-                        marker_color=colors[k], text=[cc.get(k, 0)],
+        for mdl in order:
+            fig.add_bar(x=[f"{mdl}"], y=[cc.get(mdl, 0)], name=cl[mdl],
+                        marker_color=colors[mdl], text=[cc.get(mdl, 0)],
                         textposition="outside", textfont=dict(size=14))
         show(finish(
             fig, question="Q. 실제 급변 전에 모델이 쓸 수 있는 Event 정보가 있었는가?",
@@ -1153,7 +1198,7 @@ with tabs[2]:
                      f"(결과를 보기 전에 고정)  ·  {FOOT_TARGET}",
             height=440))
         st.dataframe(pd.DataFrame([
-            {"사례": k, "정의": cl[k], "건수": cc.get(k, 0)} for k in order]),
+            {"사례": mdl, "정의": cl[mdl], "건수": cc.get(mdl, 0)} for mdl in order]),
             hide_index=True, width="stretch")
         takeaway(
             f"급변 {cc['A'] + cc['B']}건 중 <b>{cc['A']}건</b>에는 예측 시점에 이미 "
@@ -1849,8 +1894,10 @@ with tabs[2]:
         rel = pd.DataFrame(tr["relevance"]).T
         rel.index = [TL.get(i, i) for i in rel.index]
         rel.columns = ["철강 사슬", "구리 사슬", "석유 사슬"]
-        st.dataframe(rel.style.format("{:.2f}").background_gradient(
-            cmap="Blues", vmin=0, vmax=1), width="stretch")
+        heat_table(rel, title="target 별 Event 관련성  "
+                             "<span style='font-size:13px;color:#6B7280'>"
+                             "1.00 = 그 상품 자체 · 0 = 전달 경로 없음</span>",
+                   zmax=1.0, height=320)
         st.markdown(
             f"- 광역 거시 조치: **{tr['macro_wide']}** "
             "(단, `…Day/Week/Month, 20xx` 형태의 의례적 포고는 **0**)\n"
@@ -1862,7 +1909,7 @@ with tabs[2]:
         lag = pd.DataFrame(tr["expected_lag"]).T
         lag.index = [TL.get(i, i) for i in lag.index]
         lag.columns = ["무역정책", "지정학·공급", "수요·거시"]
-        st.dataframe(lag.style.format("{:.0f}개월"), width="stretch")
+        safe_table(lag.style.format("{:.0f}개월"), width="stretch")
         st.info(
             "원유는 연속 현물시장에서 세계적으로 **즉시** 재가격되므로 공급·지정학 "
             "충격이 당월에 도달합니다. 금속 원료는 물리적 계약·재고를 거쳐 한 달 "
@@ -1957,7 +2004,7 @@ with tabs[2]:
                   "더해서 좋아짐</span>",
             ylab="상대 개선률 (%)", xlab="", height=440))
 
-        st.dataframe(pd.DataFrame([
+        safe_table(pd.DataFrame([
             {"대상": r["label"], "M0": r["mae_M0"], "M1": r["mae_M1"],
              "M2": r["mae_M2"],
              "시장정보 효과 %": r["history_to_market"],
@@ -2014,7 +2061,7 @@ with tabs[2]:
                   "도움</span>",
             ylab="Event 증분 개선률 (%)", xlab="", height=430))
 
-        st.dataframe(pd.DataFrame([
+        safe_table(pd.DataFrame([
             {"대상": p[0]["label"],
              "matched 학습행": p[0]["n_train_first"],
              "maximum 학습행": p[1]["n_train_first"],
@@ -2106,7 +2153,7 @@ with tabs[2]:
             tr = [r for r in wk["trajectory"]
                   if r["target_id"] == wt and r["mode"] == wm
                   and r["model"] in ("M0", "M1", "M2")]
-            st.dataframe(pd.DataFrame([
+            safe_table(pd.DataFrame([
                 {"모델": name[r["model"]], "W0 MAE": r["mae_W0"],
                  "W4 MAE": r["mae_W4"], "변화": r["change"],
                  "수정된 달": r["months_revised"],
@@ -2219,7 +2266,7 @@ with tabs[4]:
         st.markdown("결과를 보기 **전에** 규칙을 고정한 실험의 원본 결과입니다. "
                     "이후 어떤 Demo 도 이 결과를 대체하지 않습니다.")
         om = D["official_metrics"]
-        st.dataframe(
+        safe_table(
             om[om["target_id"] == tgt["series_id"]][
                 ["model", "n_origins", "mae", "rmse", "status"]]
             .rename(columns={"model": "모델", "n_origins": "시점 수",
@@ -2377,7 +2424,7 @@ with tabs[4]:
             "모든 모델과 모든 비교를 **하나도 빠짐없이** 싣습니다.")
         vm8 = D["v8_metrics"].copy()
         vm8["모델"] = vm8["model"].map(lambda m: v8["labels"].get(m, m))
-        st.dataframe(
+        safe_table(
             vm8[["모델", "n", "mae_all", "mae_shock", "mae_normal",
                  "n_shock", "direction_accuracy", "direction_accuracy_shock"]]
             .rename(columns={"n": "시점 수", "mae_all": "MAE 전체 ↓",
@@ -2515,7 +2562,7 @@ with tabs[4]:
             "**V9 는 모델이 아니라 데이터를 바꿨습니다** — 예측 대상 50개월을 그대로 "
             "두고 과거 학습정보만 늘렸습니다. 모든 모델과 비교를 하나도 빠짐없이 "
             "싣습니다.")
-        st.dataframe(
+        safe_table(
             D["v9_metrics"][["model", "n", "mae", "rmse", "mae_shock",
                              "mae_normal", "direction_accuracy",
                              "is_legacy_frozen"]]
@@ -2633,7 +2680,7 @@ with tabs[4]:
         vm["모델"] = vm["model"].map(lambda m: LABEL.get(m, m))
         vm["지위"] = vm["status"].map(
             {"OFFICIAL_PREREGISTERED": "공식 사전등록", "EXPLORATORY": "탐색적 확장"})
-        st.dataframe(
+        safe_table(
             vm[["view", "모델", "mae", "rmse", "smape",
                 "directional_accuracy", "지위"]]
             .rename(columns={"view": "그룹", "mae": "MAE ↓", "rmse": "RMSE ↓",
