@@ -1,7 +1,7 @@
 # DEPLOYMENT AUDIT
 
-- 감사 시각(UTC): 2026-08-28T16:16:23+00:00
-- 검사 파일 수: 87
+- 감사 시각(UTC): 2026-08-29T03:19:30+00:00
+- 검사 파일 수: 96
 - 문제: **0건**
 
 > 배포된 앱이 공개로 보일 수 있다고 가정하고 **PUBLIC-SAFE 기준**으로 감사한다.
@@ -44,6 +44,14 @@
 - `data/demo_v10_weekly_metrics.csv`
 - `data/demo_v10_weekly_traj_metrics.csv`
 - `data/demo_v10_weekly_trajectory.csv`
+- `data/demo_v11_forecast_vintage.csv`
+- `data/demo_v11_material_events.csv`
+- `data/demo_v11_release_arrivals.csv`
+- `data/demo_v11_release_effect.csv`
+- `data/demo_v11_rights.csv`
+- `data/demo_v11_stage_metrics.csv`
+- `data/demo_v11_targets.csv`
+- `data/demo_v11_trajectory_metrics.csv`
 - `data/demo_v3_metrics.csv`
 - `data/demo_v4_comparisons.csv`
 - `data/demo_v4_event_attribution.csv`
@@ -92,6 +100,7 @@
 - `data/predictions.csv`
 - `data/run_metadata.json`
 - `data/v10_metadata.json`
+- `data/v11_metadata.json`
 - `data/x_feature_registry.csv`
 - `docs/data_expansion_v8.md`
 - `docs/event_method.md`

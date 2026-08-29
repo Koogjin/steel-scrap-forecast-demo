@@ -1,0 +1,7 @@
+source,organization,status,used,url,note
+"PPI Detailed Report (로컬 보유 227 회차, 2007-01 ~ 2026-01)",U.S. Bureau of Labor Statistics,PASS,True,https://www.bls.gov/ppi/detailed-report/,**새 HTTP 취득 없음.** V8/V9 가 공식 경로로 받아 로컬에 보관 중인 회차를 다시 읽는다.
+Federal Register documents (REST API v1) — V10 이 구축한 Broad Event Universe,Office of the Federal Register (NARA) / U.S. GPO,PASS,True,https://www.federalregister.gov/api/v1/documents.json,"**V11 은 새 요청을 보내지 않는다.** V10 이 공식 API 로 받아 둔 메타데이터 (11,293 레코드 / 3,124 episode)를 그대로 쓰고, 재료성 규칙으로 더 좁게 거른다."
+EIA 주간 석유 계열,U.S. Energy Information Administration,REJECT,False,,공개 주간 파일이 **현재 개정값만** 담아 과거 시점 재구성이 불가능하다. 주간 재고는 실제로 개정된다. V11 은 rolling nowcast 이므로 이 결함이 더 치명적이다.
+Federal Reserve H.15 Selected Interest Rates,Board of Governors of the Federal Reserve System,REVIEW,False,,권리·PIT 는 문제없다. 그러나 네 target 어느 것의 사전동결 Economic Driver Map 에도 없다. 결과를 보고 넣으면 성능 추종이다.
+LME 구리 · Platts/TSI 철광석 스팟 등 거래소·상용 가격,다양(상업),REJECT,False,,상용 라이선스. 재배포·파생 이용 제한. **원시 구리 target 을 찾을 때 가장 먼저 떠오르는 후보지만 그래서 더 분명히 기각한다.**
+뉴스 코퍼스 · 상용 DB · Wikipedia · 사후 정리 연표,,REJECT,False,,상시 금지. 유료·독점·스크래핑·hindsight 위험.

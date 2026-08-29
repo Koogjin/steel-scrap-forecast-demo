@@ -1,6 +1,6 @@
 {
-  "exported_at": "2026-08-28",
-  "git_commit": "4d6f1a15d1b91234d7bc8109a854cae57816568b",
+  "exported_at": "2026-08-29",
+  "git_commit": "cef42256d094210e6e48d37f17fbd99747fbaa14",
   "preregistration_sha256": "86d9e7dcd0591757360813c1e4e1ef4d4fb7c752fc2078346f21ceeb5da04852",
   "freeze_manifest_sha256": "ca5bb8212b44fc7b7da71ff051c1239f95d541c141379280e97374973f926fc2",
   "target": {
@@ -17,7 +17,7 @@
     "n_derived_features": 12,
     "n_origins": 50,
     "n_event_records": 49,
-    "n_tests": 1291,
+    "n_tests": 1307,
     "fred_dependency": 0
   },
   "common_support": {
