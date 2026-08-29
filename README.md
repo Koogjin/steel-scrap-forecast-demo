@@ -7,11 +7,7 @@
 > 월간 Commodity 지표를 **실제 공식 데이터 공개 시점**에 맞춰 갱신하며, 
 > History · Market · Event 정보의 incremental predictive value 를 검증한 연구 프로젝트입니다.
 
-![Python](https://img.shields.io/badge/Python-3.13-3776AB)
-![Streamlit](https://img.shields.io/badge/Streamlit-research%20demo-FF4B4B)
-![Point-in-Time](https://img.shields.io/badge/data-true%20point--in--time-0D9488)
-![Reproducible](https://img.shields.io/badge/research-reproducible-2563EB)
-![Paper](https://img.shields.io/badge/status-paper%20candidate-7C3AED)
+`Python 3.13` · `CPU only` · `true point-in-time` · `reproducible` · `paper candidate`
 
 ---
 
@@ -179,6 +175,13 @@ V11 동결 이후, **실제 결과가 공개되기 전에** 예측을 잠그는 
 5. 예측 대상은 공식 가격지수/대리지표이며 모든 물리적 현물·거래 가격이 아닙니다.
 6. 큰 rolling 이득은 **전월 공식 지수의 발표 시점 구조**와 강하게 결부돼 있습니다. 다른 발표 구조를 가진 자료로의 일반화는 별도 검증이 필요합니다.
 7. Event 결론은 검증된 공식 Event 프레임워크·대상·기간에 한정됩니다.
+8. 일부 분석(하위집단·진단)은 **탐색적**이며, 확증 근거로 쓰지 않습니다. 확증에 쓰는 것은 성능을 보기 전에 **사전등록**된 설계뿐입니다.
+
+### 연구 지위 표기
+
+- **사전등록(freeze-before-performance)**: target·X·이력창·단계·Event 규칙·지표·추론을 성능 수치가 존재하기 전에 커밋했고, 동결 커밋에 결과가 없음을 테스트가 git 으로 강제합니다.
+- **탐색적 분석**은 그렇게 표시하고 주장 근거로 승격하지 않습니다.
+- **Material Event 층은 예측을 개선하지 못했습니다.** 여덟 번의 서로 다른 시도 끝에 나온 결과이며, 숨기지 않고 그대로 보고합니다.
 
 ## 13. 저장소 구성
 
