@@ -1,7 +1,7 @@
 # DEPLOYMENT AUDIT
 
-- 감사 시각(UTC): 2026-08-29T03:19:30+00:00
-- 검사 파일 수: 96
+- 감사 시각(UTC): 2026-08-29T03:22:30+00:00
+- 검사 파일 수: 97
 - 문제: **0건**
 
 > 배포된 앱이 공개로 보일 수 있다고 가정하고 **PUBLIC-SAFE 기준**으로 감사한다.
@@ -107,6 +107,7 @@
 - `docs/event_method_v3.md`
 - `docs/executive_summary.md`
 - `docs/findings_v10.md`
+- `docs/findings_v11.md`
 - `docs/findings_v3.md`
 - `docs/findings_v4.md`
 - `docs/findings_v5.md`
